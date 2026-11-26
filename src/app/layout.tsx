@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './motion.css';
 import { getSettings, siteUrl } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: `${name} — Bois de chauffage livré chez vous`, template: `%s | ${name}` },
     description,
     applicationName: name,
-    keywords: ['bois de chauffage', 'livraison bois', 'bois sec', 'bois dur', 'chêne', 'bois d\'allumage', 'Bénin', 'Cotonou'],
+    keywords: ['bois de chauffage', 'livraison bois', 'bois sec', 'bois dur', 'chêne', 'bois d\'allumage', 'France', 'Europe', 'livraison de bois à domicile', 'stère', 'bûches'],
     openGraph: { type: 'website', locale: 'fr_FR', siteName: name, title: `${name} — Votre bois de chauffage au meilleur prix`, description,
       images: [{ url: 'https://images.unsplash.com/photo-1592751854100-135b9021364c?auto=format&fit=crop&w=1200&h=630&q=70', width: 1200, height: 630, alt: 'Bois de chauffage empilé' }] },
     twitter: { card: 'summary_large_image', title: name, description },

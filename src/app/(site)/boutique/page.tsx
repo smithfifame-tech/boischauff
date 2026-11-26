@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { PageHero } from '@/components/PageHero';
 import { ProductCard } from '@/components/ProductCard';
@@ -10,12 +11,12 @@ export default async function ShopPage() {
   const [products, s] = await Promise.all([getProducts(), getSettings()]);
   return (
     <>
-      <PageHero title="Boutique" intro="Toutes nos essences, séchées et prêtes à brûler. Prix calculé au kilo avec tarifs dégressifs automatiques." />
+      <PageHero image={PHOTOS.bigPile} title="Boutique" intro="Toutes nos essences, séchées et prêtes à brûler. Prix calculé au kilo avec tarifs dégressifs automatiques." />
       <section className="section">
         <div className="container">
           {products.length === 0
             ? <p className="empty-state">Aucun produit n&apos;est disponible pour le moment.</p>
-            : <div className="products-grid">{products.map((p) => <ProductCard key={p.id} p={p} currency={s.commerce.currency} locale={s.commerce.locale} showDemo={s.commerce.show_demo_notice} />)}</div>}
+            : <div className="products-grid">{products.map((p, n) => <div key={p.id} data-reveal="up" style={{ display: 'grid', ['--d' as string]: `${(n % 3) * 0.1}s` }}><ProductCard p={p} currency={s.commerce.currency} locale={s.commerce.locale} showDemo={s.commerce.show_demo_notice} /></div>)}</div>}
         </div>
       </section>
     </>

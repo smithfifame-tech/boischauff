@@ -10,6 +10,8 @@ import { OrderSummary } from './OrderSummary';
 import { api, uid } from '@/lib/client';
 import { quoteDelivery } from '@/lib/pricing';
 
+const COUNTRIES = ['France', 'Belgique', 'Luxembourg', 'Suisse', 'Monaco', 'Allemagne', 'Espagne', 'Italie', 'Pays-Bas', 'Autriche', 'Portugal', 'Autre pays européen'];
+
 interface Props {
   user: { firstName: string; lastName: string; email: string; phone: string } | null;
   address: { line1: string; line2: string; city: string; postalCode: string; country: string } | null;
@@ -21,7 +23,7 @@ export function CheckoutForm({ user, address }: Props) {
   const idem = useRef<string>('');
   const [f, setF] = useState({
     firstName: user?.firstName ?? '', lastName: user?.lastName ?? '', email: user?.email ?? '', phone: user?.phone ?? '',
-    line1: address?.line1 ?? '', line2: address?.line2 ?? '', city: address?.city ?? '', postalCode: address?.postalCode ?? '', country: address?.country ?? 'Bénin',
+    line1: address?.line1 ?? '', line2: address?.line2 ?? '', city: address?.city ?? '', postalCode: address?.postalCode ?? '', country: address?.country ?? 'France',
     instructions: '', desiredDate: '', saveAddress: Boolean(user), acceptTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,6 +69,8 @@ export function CheckoutForm({ user, address }: Props) {
     if (!/^[+0-9 ().-]{6,25}$/.test(f.phone.trim())) e.phone = 'Numéro de téléphone invalide.';
     if (f.line1.trim().length < 3) e.line1 = 'Adresse requise.';
     if (f.city.trim().length < 2) e.city = 'Ville requise.';
+    if (f.postalCode.trim().length < 3) e.postalCode = 'Code postal requis.';
+    else if (f.country === 'France' && !/^\d{5}$/.test(f.postalCode.trim())) e.postalCode = 'Code postal français : 5 chiffres.';
     if (f.country.trim().length < 2) e.country = 'Pays requis.';
     if (!zoneId) e.zone = 'Choisissez votre zone de livraison.';
     if (!f.acceptTerms) e.acceptTerms = 'Veuillez accepter les conditions générales de vente.';
@@ -114,18 +118,21 @@ export function CheckoutForm({ user, address }: Props) {
             <div className="field"><label className="label" htmlFor="firstName">Prénom</label><input id="firstName" className="input" autoComplete="given-name" value={f.firstName} onChange={set('firstName')} aria-invalid={inv('firstName')} />{err('firstName')}</div>
             <div className="field"><label className="label" htmlFor="lastName">Nom</label><input id="lastName" className="input" autoComplete="family-name" value={f.lastName} onChange={set('lastName')} aria-invalid={inv('lastName')} />{err('lastName')}</div>
             <div className="field"><label className="label" htmlFor="email">Adresse e-mail</label><input id="email" type="email" className="input" autoComplete="email" value={f.email} onChange={set('email')} aria-invalid={inv('email')} />{err('email')}</div>
-            <div className="field"><label className="label" htmlFor="phone">Téléphone</label><input id="phone" type="tel" className="input" autoComplete="tel" placeholder="+229 …" value={f.phone} onChange={set('phone')} aria-invalid={inv('phone')} />{err('phone')}</div>
+            <div className="field"><label className="label" htmlFor="phone">Téléphone</label><input id="phone" type="tel" className="input" autoComplete="tel" placeholder="06 12 34 56 78" value={f.phone} onChange={set('phone')} aria-invalid={inv('phone')} />{err('phone')}</div>
           </div>
         </div>
 
         <div className="card card-pad form-section">
           <h2><span className="n">2</span> Adresse de livraison</h2>
           <div className="form-grid">
-            <div className="field full"><label className="label" htmlFor="line1">Adresse complète</label><input id="line1" className="input" autoComplete="street-address" placeholder="Rue, quartier, repère…" value={f.line1} onChange={set('line1')} aria-invalid={inv('line1')} />{err('line1')}</div>
-            <div className="field full"><label className="label" htmlFor="line2">Complément d&apos;adresse <span className="opt">(facultatif)</span></label><input id="line2" className="input" placeholder="Bâtiment, portail, étage…" value={f.line2} onChange={set('line2')} /></div>
+            <div className="field full"><label className="label" htmlFor="line1">Adresse complète</label><input id="line1" className="input" autoComplete="street-address" placeholder="12 rue des Chênes" value={f.line1} onChange={set('line1')} aria-invalid={inv('line1')} />{err('line1')}</div>
+            <div className="field full"><label className="label" htmlFor="line2">Complément d&apos;adresse <span className="opt">(facultatif)</span></label><input id="line2" className="input" placeholder="Bâtiment, digicode, portail…" value={f.line2} onChange={set('line2')} /></div>
             <div className="field"><label className="label" htmlFor="city">Ville</label><input id="city" className="input" autoComplete="address-level2" value={f.city} onChange={set('city')} aria-invalid={inv('city')} />{err('city')}</div>
-            <div className="field"><label className="label" htmlFor="postalCode">Code postal <span className="opt">(facultatif)</span></label><input id="postalCode" className="input" autoComplete="postal-code" value={f.postalCode} onChange={set('postalCode')} /></div>
-            <div className="field full"><label className="label" htmlFor="country">Pays</label><input id="country" className="input" autoComplete="country-name" value={f.country} onChange={set('country')} aria-invalid={inv('country')} />{err('country')}</div>
+            <div className="field"><label className="label" htmlFor="postalCode">Code postal</label><input id="postalCode" className="input" inputMode="numeric" autoComplete="postal-code" placeholder="75001" value={f.postalCode} onChange={set('postalCode')} aria-invalid={inv('postalCode')} />{err('postalCode')}</div>
+            <div className="field full"><label className="label" htmlFor="country">Pays</label>
+              <select id="country" className="select" autoComplete="country-name" value={f.country} onChange={set('country')} aria-invalid={inv('country')}>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>{err('country')}</div>
           </div>
         </div>
 

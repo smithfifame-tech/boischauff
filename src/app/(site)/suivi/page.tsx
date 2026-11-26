@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { PageHero } from '@/components/PageHero';
 import { TrackOrder } from '@/components/TrackOrder';
@@ -9,7 +10,7 @@ export default async function TrackPage({ searchParams }: Props) {
   const sp = await searchParams;
   return (
     <>
-      <PageHero title="Suivi de commande" intro="Saisissez votre numéro de commande et l'e-mail ou le téléphone utilisé lors de la commande." />
+      <PageHero image={PHOTOS.flatbed} title="Suivi de commande" intro="Saisissez votre numéro de commande et l'e-mail ou le téléphone utilisé lors de la commande." />
       <section className="section"><div className="container" style={{ maxWidth: 980 }}><TrackOrder initialOrder={sp.order ?? ''} /></div></section>
     </>
   );

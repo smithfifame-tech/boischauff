@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle2, Clock, Download, PackageSearch } from 'lucide-react';
@@ -15,14 +16,14 @@ export default async function ConfirmationPage({ searchParams }: Props) {
   const sp = await searchParams;
   const [o, s] = await Promise.all([loadOrderForPage(sp.order, sp.t), getSettings()]);
   if (!o) {
-    return (<><PageHero title="Confirmation" /><section className="section"><div className="container"><p className="alert alert-error">Commande introuvable ou lien invalide.</p></div></section></>);
+    return (<><PageHero image={PHOTOS.livingFire} title="Confirmation" /><section className="section"><div className="container"><p className="alert alert-error">Commande introuvable ou lien invalide.</p></div></section></>);
   }
   const paid = o.payment_status === 'paid';
   const q = `order=${encodeURIComponent(o.order_number)}&t=${encodeURIComponent(o.access_token)}`;
   const m = (v: number | null) => formatMoney(v ?? 0, o.currency, s.commerce.locale);
   return (
     <>
-      <PageHero title={paid ? 'Merci pour votre commande !' : 'Commande enregistrée'} intro={paid ? 'Votre paiement est confirmé. Un e-mail récapitulatif avec votre reçu vous a été envoyé.' : 'Votre commande attend encore la confirmation du paiement.'} />
+      <PageHero image={PHOTOS.livingFire} title={paid ? 'Merci pour votre commande !' : 'Commande enregistrée'} intro={paid ? 'Votre paiement est confirmé. Un e-mail récapitulatif avec votre reçu vous a été envoyé.' : 'Votre commande attend encore la confirmation du paiement.'} />
       <section className="section">
         <div className="container two-col">
           <div><OrderDoc o={o} s={s} kind="order" /></div>
@@ -34,7 +35,7 @@ export default async function ConfirmationPage({ searchParams }: Props) {
                 <dt>N° de commande</dt><dd>{o.order_number}</dd>
                 <dt>Statut paiement</dt><dd><span className={`badge ${paid ? 'b-green' : 'b-orange'}`}>{PAYMENT_STATUSES[o.payment_status]}</span></dd>
                 <dt>Statut commande</dt><dd>{ORDER_STATUSES[o.status]}</dd>
-                <dt>Date de commande</dt><dd>{new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' })}</dd>
+                <dt>Date de commande</dt><dd>{new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' })}</dd>
                 <dt>Frais de livraison</dt><dd>{o.delivery_fee === null ? 'Sur devis' : o.delivery_fee === 0 ? 'Offerts' : m(o.delivery_fee)}</dd>
                 <dt>{paid ? 'Montant payé' : 'Montant'}</dt><dd style={{ color: 'var(--green)', fontSize: '1.2rem' }}>{o.total_amount === null ? 'Sur devis' : m(o.total_amount)}</dd>
                 {o.payment?.transaction_ref && <><dt>Réf. transaction</dt><dd style={{ wordBreak: 'break-all' }}>{o.payment.transaction_ref}</dd></>}

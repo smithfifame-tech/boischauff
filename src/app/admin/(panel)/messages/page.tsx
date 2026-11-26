@@ -11,7 +11,7 @@ export default async function AdminMessages() {
         <div className="panel" key={m.id}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
             <strong>{m.name} · <a href={`mailto:${m.email}`} style={{ color: 'var(--green)' }}>{m.email}</a>{m.phone ? ` · ${m.phone}` : ''}</strong>
-            <span className="hint">{new Date(m.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' })}</span>
+            <span className="hint">{new Date(m.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' })}</span>
           </div>
           {m.subject && <p style={{ margin: '6px 0', fontWeight: 700 }}>{m.subject}</p>}
           <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{m.message}</p>

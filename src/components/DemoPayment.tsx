@@ -22,7 +22,7 @@ export function DemoPayment({ txId, token, orderNumber, amount, status }: { txId
   };
   return (
     <div className="card card-pad" style={{ border: '3px dashed var(--orange)' }}>
-      <p className="alert alert-warn"><AlertTriangle size={18} aria-hidden /> <span><strong>MODE DÉMONSTRATION</strong> — aucune carte ni compte mobile money n&apos;est débité. Configurez SasPay pour encaisser de vrais paiements.</span></p>
+      <p className="alert alert-warn"><AlertTriangle size={18} aria-hidden /> <span><strong>MODE DÉMONSTRATION</strong> — aucune carte bancaire n&apos;est débitée. Configurez Stripe pour encaisser de vrais paiements.</span></p>
       <dl className="kv" style={{ margin: '16px 0' }}>
         <dt>Commande</dt><dd>{orderNumber}</dd>
         <dt>Transaction</dt><dd>{txId}</dd>

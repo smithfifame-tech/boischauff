@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -18,7 +19,7 @@ export default async function PaymentPage({ searchParams }: Props) {
   const sp = await searchParams;
   const [o, s] = await Promise.all([loadOrderForPage(sp.order, sp.t), getSettings()]);
   if (!o) {
-    return (<><PageHero title="Paiement" /><section className="section"><div className="container"><p className="alert alert-error"><span>Commande introuvable ou lien invalide. Utilisez le lien reçu par e-mail ou le <Link href="/suivi" style={{ textDecoration: 'underline' }}>suivi de commande</Link>.</span></p></div></section></>);
+    return (<><PageHero image={PHOTOS.stove} title="Paiement" /><section className="section"><div className="container"><p className="alert alert-error"><span>Commande introuvable ou lien invalide. Utilisez le lien reçu par e-mail ou le <Link href="/suivi" style={{ textDecoration: 'underline' }}>suivi de commande</Link>.</span></p></div></section></>);
   }
   const q = `order=${encodeURIComponent(o.order_number)}&t=${encodeURIComponent(o.access_token)}`;
   if (o.payment_status === 'paid') redirect(`/commande/confirmation?${q}`);
@@ -27,7 +28,7 @@ export default async function PaymentPage({ searchParams }: Props) {
 
   return (
     <>
-      <PageHero title="Devis & paiement sécurisé" intro={`Commande ${o.order_number} — vérifiez votre devis puis réglez en ligne.`} />
+      <PageHero image={PHOTOS.stove} title="Devis & paiement sécurisé" intro={`Commande ${o.order_number} — vérifiez votre devis puis réglez en ligne.`} />
       <section className="section">
         <div className="container two-col">
           <div>
@@ -53,7 +54,7 @@ export default async function PaymentPage({ searchParams }: Props) {
                   <p style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--green)', fontFamily: 'var(--font-title)', margin: '0 0 12px' }}>{formatMoney(o.total_amount ?? 0, o.currency, s.commerce.locale)}</p>
                   {sp.cancelled && <p className="alert alert-warn" style={{ textAlign: 'left' }}>Paiement interrompu. Vous pouvez réessayer quand vous le souhaitez.</p>}
                   {lastFailed && !sp.cancelled && <p className="alert alert-error" style={{ textAlign: 'left' }}>Le dernier paiement a été refusé{o.transactions[0].failure_reason ? ` (${o.transactions[0].failure_reason})` : ''}. Vous pouvez réessayer.</p>}
-                  {provider === 'demo' && <p className="alert alert-warn" style={{ textAlign: 'left' }}><Info size={18} aria-hidden /> <span><strong>Mode démonstration</strong> : SasPay n&apos;est pas encore configuré. Le paiement sera simulé, sans aucun encaissement.</span></p>}
+                  {provider === 'demo' && <p className="alert alert-warn" style={{ textAlign: 'left' }}><Info size={18} aria-hidden /> <span><strong>Mode démonstration</strong> : le paiement par carte (Stripe) n&apos;est pas encore activé. Le paiement sera simulé, sans aucun encaissement.</span></p>}
                   {provider === 'none'
                     ? <p className="alert alert-error" style={{ textAlign: 'left' }}>Le paiement en ligne n&apos;est pas encore disponible. Contactez-nous{s.company.phone ? ` au ${s.company.phone}` : ''} pour finaliser votre commande.</p>
                     : <PayButton orderNumber={o.order_number} token={o.access_token} label={lastFailed || sp.cancelled ? 'Réessayer le paiement' : `Payer ${formatMoney(o.total_amount ?? 0, o.currency, s.commerce.locale)}`} />}

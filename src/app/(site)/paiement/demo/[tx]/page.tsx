@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PageHero } from '@/components/PageHero';
@@ -22,7 +23,7 @@ export default async function DemoPaymentPage({ params, searchParams }: Props) {
   const s = await getSettings();
   return (
     <>
-      <PageHero title="Passerelle de paiement — DÉMONSTRATION" intro="SasPay n'est pas encore configuré : cette page simule la passerelle. Aucun paiement réel n'est effectué." />
+      <PageHero image={PHOTOS.texture} title="Passerelle de paiement — DÉMONSTRATION" intro="Stripe n'est pas encore configuré : cette page simule la passerelle. Aucun paiement réel n'est effectué." />
       <section className="section"><div className="container" style={{ maxWidth: 620 }}>
         <DemoPayment txId={row.public_id} token={t} orderNumber={row.order_number} status={row.status}
           amount={formatMoney(Number(row.amount), row.currency, s.commerce.locale)} />

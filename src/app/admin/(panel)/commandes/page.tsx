@@ -55,7 +55,7 @@ export default async function AdminOrders({ searchParams }: Props) {
                 <td><Link className="row-link" href={`/admin/commandes/${o.id}`}>{o.order_number}</Link>{o.is_demo && <> <span className="demo-tag">démo</span></>}</td>
                 <td>{o.customer_first_name} {o.customer_last_name}<br /><span className="hint">{o.customer_phone}</span></td>
                 <td>{o.delivery_zone_name}</td>
-                <td>{new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' })}</td>
+                <td>{new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' })}</td>
                 <td><span className={`badge ${statusBadge(o.status)}`}>{ORDER_STATUSES[o.status]}</span></td>
                 <td><span className={`badge ${payBadge(o.payment_status)}`}>{PAYMENT_STATUSES[o.payment_status]}</span></td>
                 <td>{o.total_amount === null ? 'Sur devis' : formatMoney(Number(o.total_amount), o.currency, s.commerce.locale)}</td>

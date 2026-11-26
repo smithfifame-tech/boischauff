@@ -7,7 +7,7 @@ import { api } from '@/lib/client';
 
 export function AccountProfile({ user, address }: { user: { firstName: string; lastName: string; email: string; phone: string }; address: { line1: string; line2: string; city: string; postalCode: string; country: string } | null }) {
   const router = useRouter();
-  const [f, setF] = useState({ ...user, line1: address?.line1 ?? '', line2: address?.line2 ?? '', city: address?.city ?? '', postalCode: address?.postalCode ?? '', country: address?.country ?? 'Bénin' });
+  const [f, setF] = useState({ ...user, line1: address?.line1 ?? '', line2: address?.line2 ?? '', city: address?.city ?? '', postalCode: address?.postalCode ?? '', country: address?.country ?? 'France' });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((p) => ({ ...p, [k]: e.target.value }));

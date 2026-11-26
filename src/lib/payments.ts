@@ -18,7 +18,7 @@ import { toCents } from './pricing';
    Les clés restent côté serveur (variables d'environnement), jamais dans le navigateur.
    ========================================================================== */
 
-export type ProviderName = 'saspay' | 'demo' | 'none';
+export type ProviderName = 'stripe' | 'saspay' | 'demo' | 'none';
 
 /** Devises acceptées par SasPay (le site doit être configuré dans l'une d'elles). */
 export const SASPAY_CURRENCIES = ['XOF', 'XAF', 'GHS', 'NGN', 'KES', 'UGX', 'TZS', 'RWF', 'ZMW', 'MWK', 'MZN', 'GNF', 'SLE', 'CDF', 'USD', 'INR'];
@@ -46,12 +46,124 @@ export function saspayConfigured() {
   return Boolean(c.secretKey && c.webhookSecret && saspayKeyMatchesEnv());
 }
 
-/** Mode démonstration : actif uniquement si SasPay n'est pas configuré et si PAYMENT_DEMO_MODE ≠ "off". */
-export function demoAllowed() {
-  return !saspayConfigured() && (process.env.PAYMENT_DEMO_MODE || 'auto') !== 'off';
+/* ==========================================================================
+   Passerelle Stripe Checkout (cartes bancaires, Apple Pay, Google Pay — euros)
+   - POST /v1/checkout/sessions (formulaire encodé) → url de paiement hébergée.
+   - Webhook : en-tête Stripe-Signature « t=…,v1=… » = HMAC-SHA256 de `${t}.${corps}`.
+   - La session est TOUJOURS relue par l'API (payment_status, amount_total, currency).
+   ========================================================================== */
+
+export function stripeConfig() {
+  return {
+    baseUrl: (process.env.STRIPE_API_BASE_URL || 'https://api.stripe.com').replace(/\/$/, ''),
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+  };
+}
+export function stripeConfigured() {
+  const c = stripeConfig();
+  return Boolean(c.secretKey && c.webhookSecret && /^(sk|rk)_(test|live)_/.test(c.secretKey));
+}
+export function stripeMode(): 'test' | 'live' | null {
+  const k = stripeConfig().secretKey;
+  return k.includes('_live_') ? 'live' : k.includes('_test_') ? 'test' : null;
 }
 
+function formEncode(obj: Record<string, unknown>, prefix = ''): string[] {
+  const out: string[] = [];
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined || v === null) continue;
+    const key = prefix ? `${prefix}[${k}]` : k;
+    if (Array.isArray(v)) v.forEach((item, i) => {
+      if (item && typeof item === 'object') out.push(...formEncode(item as Record<string, unknown>, `${key}[${i}]`));
+      else out.push(`${encodeURIComponent(`${key}[${i}]`)}=${encodeURIComponent(String(item))}`);
+    });
+    else if (typeof v === 'object') out.push(...formEncode(v as Record<string, unknown>, key));
+    else out.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(v))}`);
+  }
+  return out;
+}
+
+async function stripeCall<T>(method: 'GET' | 'POST', path: string, body?: Record<string, unknown>, idempotencyKey?: string): Promise<T> {
+  const c = stripeConfig();
+  const headers: Record<string, string> = { Authorization: `Bearer ${c.secretKey}`, 'Stripe-Version': '2024-06-20' };
+  if (body) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  const res = await fetch(`${c.baseUrl}${path}`, { method, headers, body: body ? formEncode(body).join('&') : undefined, cache: 'no-store', signal: AbortSignal.timeout(20_000) });
+  const json = (await res.json().catch(() => ({}))) as Record<string, unknown> & { error?: { message?: string } };
+  if (!res.ok) throw new Error(`Stripe ${res.status}: ${json.error?.message ?? 'erreur'}`.slice(0, 300));
+  return json as T;
+}
+
+/** Montant en plus petite unité (centimes) ; devises sans décimales gérées. */
+const ZERO_DECIMAL = ['BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'];
+function minorUnits(amount: number, currency: string) {
+  return ZERO_DECIMAL.includes(currency.toUpperCase()) ? Math.round(amount) : toCents(amount);
+}
+
+async function stripeCreate(order: FullOrder, txPublicId: string) {
+  const base = siteUrl();
+  const q = `order=${encodeURIComponent(order.order_number)}&t=${encodeURIComponent(order.access_token)}`;
+  const session = await stripeCall<{ id: string; url: string }>('POST', '/v1/checkout/sessions', {
+    mode: 'payment',
+    locale: 'fr',
+    customer_email: order.customer_email,
+    client_reference_id: txPublicId,
+    success_url: `${base}/paiement/retour?${q}`,
+    cancel_url: `${base}/commande/paiement?${q}&cancelled=1`,
+    expires_at: Math.floor(Date.now() / 1000) + 23 * 3600,
+    metadata: { tx: txPublicId, order_number: order.order_number, source: 'boischauff' },
+    payment_intent_data: { description: `Commande ${order.order_number}`, metadata: { tx: txPublicId, order_number: order.order_number } },
+    line_items: [{
+      quantity: 1,
+      price_data: {
+        currency: order.currency.toLowerCase(),
+        unit_amount: minorUnits(order.total_amount ?? 0, order.currency),
+        product_data: { name: `Commande ${order.order_number} — bois de chauffage`, description: order.items.map((i) => `${i.product_name} ${i.quantity_kg} kg`).join(', ').slice(0, 300) },
+      },
+    }],
+  }, `boischauff-${txPublicId}`);
+  if (!session?.id || !session.url) throw new Error('Réponse Stripe incomplète.');
+  return { providerTxId: session.id, checkoutUrl: session.url };
+}
+
+export async function stripeSessionStatus(sessionId: string) {
+  const s = await stripeCall<{ id: string; status?: string; payment_status?: string; amount_total?: number; currency?: string; client_reference_id?: string | null; metadata?: { tx?: string } }>(
+    'GET', `/v1/checkout/sessions/${encodeURIComponent(sessionId)}`);
+  const status: ProviderStatus = s.payment_status === 'paid' ? 'succeeded' : s.status === 'expired' ? 'failed' : 'pending';
+  const currency = (s.currency || '').toUpperCase();
+  const amountCents = typeof s.amount_total === 'number' ? (ZERO_DECIMAL.includes(currency) ? s.amount_total * 100 : s.amount_total) : null;
+  return { status, amountCents, currency: currency || null, txRef: s.client_reference_id || s.metadata?.tx, raw: s };
+}
+
+/** Signature Stripe : « t=…,v1=… », HMAC-SHA256 hex de `${t}.${corps}`, tolérance 5 min. */
+export function verifyStripeSignature(rawBody: string, header: string | null): boolean {
+  const secret = stripeConfig().webhookSecret;
+  if (!secret || !header) return false;
+  let t = '';
+  const v1: string[] = [];
+  for (const part of header.split(',')) {
+    const [k, v] = part.split('=', 2).map((x) => x.trim());
+    if (k === 't') t = v;
+    if (k === 'v1' && v) v1.push(v);
+  }
+  if (!/^\d+$/.test(t) || !v1.length) return false;
+  const expected = crypto.createHmac('sha256', secret).update(`${t}.${rawBody}`).digest('hex');
+  if (!v1.some((sig) => safeEqual(sig, expected))) return false;
+  return Math.abs(Date.now() / 1000 - Number(t)) <= 300;
+}
+
+/** Mode démonstration : actif uniquement si aucune passerelle n'est configurée et si PAYMENT_DEMO_MODE ≠ "off". */
+export function demoAllowed() {
+  return !stripeConfigured() && !saspayConfigured() && (process.env.PAYMENT_DEMO_MODE || 'auto') !== 'off';
+}
+
+/** Passerelle active. PAYMENT_PROVIDER=stripe|saspay force le choix ; sinon Stripe (euros) puis SasPay. */
 export function activeProvider(): ProviderName {
+  const forced = process.env.PAYMENT_PROVIDER;
+  if (forced === 'stripe' && stripeConfigured()) return 'stripe';
+  if (forced === 'saspay' && saspayConfigured()) return 'saspay';
+  if (stripeConfigured()) return 'stripe';
   if (saspayConfigured()) return 'saspay';
   if (demoAllowed()) return 'demo';
   return 'none';
@@ -199,7 +311,11 @@ export async function initPayment(orderNumber: string, accessToken: string): Pro
   try {
     let providerTxId: string;
     let checkoutUrl: string;
-    if (provider === 'saspay') {
+    if (provider === 'stripe') {
+      const r = await stripeCreate(order, publicId);
+      providerTxId = r.providerTxId;
+      checkoutUrl = r.checkoutUrl;
+    } else if (provider === 'saspay') {
       const r = await saspayCreate(order, publicId);
       providerTxId = r.providerTxId;
       checkoutUrl = r.checkoutUrl;
@@ -305,13 +421,20 @@ export async function settleTransaction(publicId: string, verified: {
 
 /** Interroge la passerelle pour les dernières transactions ouvertes d'une commande (page de retour). */
 export async function refreshOrderPayment(orderId: number): Promise<SettleResult | null> {
-  const txs = await db()<{ public_id: string; provider_tx_id: string | null }[]>`
-    select public_id, provider_tx_id from payment_transactions
-    where order_id = ${orderId} and status in ('created','pending') and provider = 'saspay' and provider_tx_id is not null
+  const txs = await db()<{ public_id: string; provider: string; provider_tx_id: string | null }[]>`
+    select public_id, provider, provider_tx_id from payment_transactions
+    where order_id = ${orderId} and status in ('created','pending') and provider in ('saspay','stripe') and provider_tx_id is not null
     order by created_at desc limit 3`;
   let last: SettleResult | null = null;
   for (const t of txs) {
     try {
+      if (t.provider === 'stripe') {
+        const st = await stripeSessionStatus(t.provider_tx_id as string);
+        last = await settleTransaction(t.public_id, { status: st.status, amountCents: st.amountCents, currency: st.currency, method: 'Carte bancaire (Stripe)', isDemo: false, raw: st.raw,
+          reason: st.status === 'failed' ? 'Session de paiement expirée' : undefined });
+        if (last.outcome === 'paid' || last.outcome === 'already_paid') break;
+        continue;
+      }
       const s = await saspaySessionStatus(t.provider_tx_id as string);
       // Le montant de la session est fixé à sa création (montant exact de la commande)
       last = await settleTransaction(t.public_id, { status: s.status, amountCents: null, currency: null, method: 'SasPay', isDemo: false, raw: s.raw,

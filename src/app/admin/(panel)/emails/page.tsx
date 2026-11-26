@@ -18,7 +18,7 @@ export default async function AdminEmails() {
             {rows.length === 0 && <tr><td colSpan={7} className="hint">Aucun envoi pour le moment.</td></tr>}
             {rows.map((r) => (
               <tr key={r.id}>
-                <td>{new Date(r.updated_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' })}</td>
+                <td>{new Date(r.updated_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' })}</td>
                 <td>{r.template}<br /><span className="hint">{r.subject}</span></td>
                 <td>{r.recipient}</td>
                 <td>{r.order_id ? <Link className="row-link" href={`/admin/commandes/${r.order_id}`}>{r.order_number}</Link> : '—'}</td>

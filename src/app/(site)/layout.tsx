@@ -2,6 +2,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { DemoNotice } from '@/components/DemoNotice';
 import { SiteProvider } from '@/components/SiteProvider';
+import { ScrollFX } from '@/components/ScrollFX';
 import { getSettings } from '@/lib/settings';
 import { getProducts, getZones, publicProduct, publicZone } from '@/lib/catalog';
 import { getCurrentUser } from '@/lib/auth';
@@ -25,6 +26,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <Header name={s.company.name} tagline={s.company.tagline} logoUrl={s.company.logo_url} loggedIn={Boolean(user)} />
       <main id="contenu">{children}</main>
       <Footer s={s} paymentMode={paymentMode} />
+      <ScrollFX />
     </SiteProvider>
   );
 }

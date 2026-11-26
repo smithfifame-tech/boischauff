@@ -11,8 +11,8 @@ export function LogoMark({ size = 52, title }: { size?: number; title?: string }
           <circle cx={e.cx} cy={e.cy} r={e.r * 0.5} fill="none" stroke={LOGO_COLORS.log} strokeWidth="0.8" opacity=".6" />
         </g>
       ))}
-      <path d={LOGO_PATHS.flameOuter} fill={LOGO_COLORS.flame} />
-      <path d={LOGO_PATHS.flameInner} fill={LOGO_COLORS.flameInner} />
+      <path className="flame-outer" d={LOGO_PATHS.flameOuter} fill={LOGO_COLORS.flame} />
+      <path className="flame-inner" d={LOGO_PATHS.flameInner} fill={LOGO_COLORS.flameInner} />
     </svg>
   );
 }

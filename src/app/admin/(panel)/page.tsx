@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
   const [[k], latest, [mail]] = await Promise.all([
     db()<Record<string, string>[]>`
       select count(*)::int as total,
-        count(*) filter (where created_at >= date_trunc('day', now() at time zone 'Africa/Porto-Novo') at time zone 'Africa/Porto-Novo')::int as today,
+        count(*) filter (where created_at >= date_trunc('day', now() at time zone 'Europe/Paris') at time zone 'Europe/Paris')::int as today,
         count(*) filter (where status in ('pending_payment','awaiting_quote'))::int as pending,
         count(*) filter (where payment_status = 'paid')::int as paid,
         count(*) filter (where status = 'shipping')::int as shipping,
@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
   return (
     <>
       <div className="admin-head"><h1>Tableau de bord</h1><Link href="/admin/commandes" className="btn btn-green btn-sm">Toutes les commandes</Link></div>
-      {provider !== 'saspay' && <p className="alert alert-warn" style={{ marginBottom: 12 }}>Paiement : {provider === 'demo' ? 'mode DÉMONSTRATION actif (SasPay non configuré).' : 'aucune passerelle active.'} Renseignez SASPAY_SECRET_KEY, SASPAY_WEBHOOK_SECRET et SASPAY_ENVIRONMENT dans Vercel pour encaisser de vrais paiements.</p>}
+      {(provider === 'demo' || provider === 'none') && <p className="alert alert-warn" style={{ marginBottom: 12 }}>Paiement : {provider === 'demo' ? 'mode DÉMONSTRATION actif (aucune passerelle configurée).' : 'aucune passerelle active.'} Renseignez STRIPE_SECRET_KEY et STRIPE_WEBHOOK_SECRET dans Vercel pour encaisser de vrais paiements par carte.</p>}
       {transport === 'none' && <p className="alert alert-warn" style={{ marginBottom: 12 }}>E-mails : aucun service configuré (SMTP ou Resend). Les envois sont journalisés comme « non envoyés » et peuvent être relancés après configuration.</p>}
       {mail.failed > 0 && <p className="alert alert-error" style={{ marginBottom: 12 }}>{mail.failed} e-mail(s) non envoyé(s) ces 7 derniers jours. <Link href="/admin/emails" style={{ textDecoration: 'underline' }}>Voir le journal</Link></p>}
       <div className="kpis">{kpis.map(([l, v]) => <div className="kpi" key={String(l)}><small>{l}</small><b>{v}</b></div>)}</div>
@@ -50,7 +50,7 @@ export default async function AdminDashboard() {
                 <tr key={o.id}>
                   <td><Link className="row-link" href={`/admin/commandes/${o.id}`}>{o.order_number}</Link>{o.is_demo && <> <span className="demo-tag">démo</span></>}</td>
                   <td>{o.customer_first_name} {o.customer_last_name}</td>
-                  <td>{new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' })}</td>
+                  <td>{new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' })}</td>
                   <td><span className={`badge ${statusBadge(o.status)}`}>{ORDER_STATUSES[o.status]}</span></td>
                   <td><span className={`badge ${payBadge(o.payment_status)}`}>{PAYMENT_STATUSES[o.payment_status]}</span></td>
                   <td>{o.total_amount === null ? 'Sur devis' : formatMoney(Number(o.total_amount), o.currency, s.commerce.locale)}</td>

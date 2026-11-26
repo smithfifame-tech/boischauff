@@ -1,3 +1,5 @@
+import { AuthSplit } from '@/components/AuthSplit';
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PageHero } from '@/components/PageHero';
@@ -8,8 +10,8 @@ export const metadata: Metadata = { title: 'Créer un compte', robots: { index: 
 export default function Page() {
   return (
     <>
-      <PageHero title="Créer un compte" crumbs={[{ href: '/compte', label: 'Mon compte' }]} />
-      <section className="section"><div className="container"><Suspense><RegisterForm /></Suspense></div></section>
+      <PageHero image={PHOTOS.livingRoom} title="Créer un compte" crumbs={[{ href: '/compte', label: 'Mon compte' }]} />
+      <section className="section"><div className="container"><AuthSplit image={PHOTOS.cabinStove} title="Créez votre compte" text="Commandez plus vite et suivez toutes vos livraisons au même endroit."><Suspense><RegisterForm /></Suspense></AuthSplit></div></section>
     </>
   );
 }

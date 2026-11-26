@@ -45,7 +45,7 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
 }
 
 const fmtDate = (d: Date | string | null) =>
-  d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' }) : '';
+  d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' }) : '';
 
 export async function buildReceiptPdf(order: FullOrder, settings: AllSettings): Promise<Uint8Array> {
   const c = settings.company;
@@ -96,7 +96,7 @@ export async function buildReceiptPdf(order: FullOrder, settings: AllSettings): 
     ['Devis', order.quote_number],
     ['Date de commande', fmtDate(order.created_at)],
     ['Date de paiement', fmtDate(order.paid_at)],
-    ['Moyen de paiement', order.payment?.provider === 'demo' ? 'Démonstration (aucun encaissement)' : `SasPay${order.payment?.method ? ` — ${order.payment.method}` : ''}`],
+    ['Moyen de paiement', order.payment?.provider === 'demo' ? 'Démonstration (aucun encaissement)' : order.payment?.method || (order.payment?.provider === 'stripe' ? 'Carte bancaire (Stripe)' : 'SasPay')],
     ['Référence transaction', order.payment?.transaction_ref ?? '-'],
   ];
   let iy = y + 10;

@@ -2,7 +2,7 @@ import type { FullOrder } from '@/lib/orders';
 import type { AllSettings } from '@/lib/settings';
 import { formatMoney, formatQty } from '@/lib/pricing';
 
-const fmt = (d: Date | string | null) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' }) : '—');
+const fmt = (d: Date | string | null) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' }) : '—');
 
 export function OrderDoc({ o, s, kind = 'quote' }: { o: FullOrder; s: AllSettings; kind?: 'quote' | 'order' }) {
   const m = (v: number | null) => (v === null ? 'Sur devis' : formatMoney(v, o.currency, s.commerce.locale));

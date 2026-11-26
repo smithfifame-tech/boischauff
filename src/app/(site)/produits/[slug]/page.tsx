@@ -38,7 +38,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
-      <PageHero title={p.name} intro={p.short_description} crumbs={[{ href: '/boutique', label: 'Boutique' }]} />
+      <PageHero image={p.images[0]?.url} title={p.name} intro={p.short_description} crumbs={[{ href: '/boutique', label: 'Boutique' }]} />
       <section className="section">
         <div className="container product-detail">
           <div>

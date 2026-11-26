@@ -11,7 +11,7 @@ import { formatMoney } from '@/lib/pricing';
 import { payBadge, statusBadge } from '@/lib/admin-ui';
 
 type Props = { params: Promise<{ id: string }> };
-const fmt = (d: Date | string | null) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' }) : '—');
+const fmt = (d: Date | string | null) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' }) : '—');
 
 export default async function AdminOrder({ params }: Props) {
   const id = Number((await params).id);
@@ -44,7 +44,7 @@ export default async function AdminOrder({ params }: Props) {
             <h2>Paiement</h2>
             {o.payment ? (
               <dl className="kv">
-                <dt>Passerelle</dt><dd>{o.payment.provider === 'demo' ? 'Démonstration (aucun encaissement)' : 'SasPay'}</dd>
+                <dt>Passerelle</dt><dd>{o.payment.provider === 'demo' ? 'Démonstration (aucun encaissement)' : o.payment.provider === 'stripe' ? 'Stripe (carte bancaire)' : 'SasPay'}</dd>
                 <dt>Montant</dt><dd>{m(o.payment.amount)}</dd>
                 <dt>Référence</dt><dd style={{ wordBreak: 'break-all' }}>{o.payment.transaction_ref}</dd>
                 <dt>Moyen</dt><dd>{o.payment.method || '—'}</dd>

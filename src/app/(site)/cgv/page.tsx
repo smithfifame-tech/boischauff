@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { LegalPage, ToComplete } from '@/components/LegalPage';
 import { getSettings } from '@/lib/settings';
@@ -8,7 +9,7 @@ export default async function CgvPage() {
   const s = await getSettings();
   const n = s.company.name;
   return (
-    <LegalPage title="Conditions générales de vente" intro="Modèle à faire valider par un professionnel du droit avant la mise en production.">
+    <LegalPage image={PHOTOS.neat} title="Conditions générales de vente" intro="Modèle à faire valider par un professionnel du droit avant la mise en production.">
       <h2>1. Vendeur</h2>
       <p>Le site est édité par {n}{s.company.address ? `, ${s.company.address}` : ''}. Contact : {s.company.email || <ToComplete>e-mail</ToComplete>}{s.company.phone ? `, ${s.company.phone}` : ''}. Forme juridique et immatriculation : <ToComplete>forme juridique, RCCM, IFU</ToComplete>.</p>
       <h2>2. Objet</h2>

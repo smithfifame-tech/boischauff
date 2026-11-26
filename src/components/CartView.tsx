@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ShoppingCart, Trash2 } from 'lucide-react';
 import { useSite } from './SiteProvider';
+import { img, PHOTOS } from '@/lib/img';
 import { useServerQuote } from './useServerQuote';
 import { OrderSummary } from './OrderSummary';
 import { quoteLine, type Unit } from '@/lib/pricing';
-import { img } from '@/lib/img';
 
 export function CartView() {
   const { items, products, zones, update, remove, money, ready, zoneId, setZoneId } = useSite();
@@ -16,8 +16,9 @@ export function CartView() {
   if (!items.length) {
     return (
       <div className="card empty-state">
-        <ShoppingCart size={48} aria-hidden />
-        <h2>Votre panier est vide</h2>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={img(PHOTOS.stack, 440, 300)} alt="" className="float-slow" />
+        <h2><ShoppingCart size={26} aria-hidden style={{ verticalAlign: '-4px' }} /> Votre panier est vide</h2>
         <p className="hint">Choisissez votre bois et la quantité souhaitée pour obtenir un devis instantané.</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/boutique" className="btn btn-green">Voir la boutique</Link>

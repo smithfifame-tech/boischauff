@@ -42,7 +42,7 @@ export function TrackOrder({ initialOrder }: { initialOrder: string }) {
           <div className="field"><label className="label" htmlFor="t-order">Numéro de commande</label>
             <input id="t-order" className="input" placeholder="BC-261126-XXXXX" value={order} onChange={(e) => setOrder(e.target.value.toUpperCase())} required /></div>
           <div className="field"><label className="label" htmlFor="t-contact">E-mail ou téléphone de vérification</label>
-            <input id="t-contact" className="input" placeholder="vous@exemple.com ou +229…" value={contact} onChange={(e) => setContact(e.target.value)} required /></div>
+            <input id="t-contact" className="input" placeholder="vous@exemple.fr ou 06 12 34 56 78" value={contact} onChange={(e) => setContact(e.target.value)} required /></div>
         </div>
         {error && <p className="alert alert-error" role="alert" style={{ marginTop: 14 }}>{error}</p>}
         <button className="btn btn-primary" style={{ marginTop: 16 }} disabled={busy}>{busy ? <Loader2 size={18} className="spin" /> : <Search size={18} />} Suivre ma commande</button>

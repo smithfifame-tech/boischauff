@@ -3,19 +3,20 @@ import { Mail, MapPin, Phone, ShieldCheck, Heart } from 'lucide-react';
 import { Brand } from './Logo';
 import { SocialIcons } from './SocialIcons';
 import type { AllSettings } from '@/lib/settings';
+import { img, PHOTOS } from '@/lib/img';
 
 export function Footer({ s, paymentMode }: { s: AllSettings; paymentMode: string }) {
   const c = s.company;
   const year = new Date().getFullYear();
   return (
-    <footer className="footer">
+    <footer className="footer" style={{ ['--footer-img' as string]: `url(${img(PHOTOS.fireplaceLogs, 1600, 700, 50)})` }}>
       <div className="container footer-main">
         <div>
           <Brand name={c.name} tagline={c.tagline} logoUrl={c.logo_url} size={56} />
           <p style={{ marginTop: 16, fontSize: '.95rem', color: '#CFE0D3' }}>
             Bois de chauffage sélectionné, séché et livré chez vous. Commandez en ligne en quelques clics.
           </p>
-          <div className="secure-badge"><ShieldCheck size={26} aria-hidden /><span>Paiement sécurisé<small>{paymentMode === 'saspay' ? 'SasPay — Mobile Money' : 'Transactions chiffrées'}</small></span></div>
+          <div className="secure-badge"><ShieldCheck size={26} aria-hidden /><span>Paiement sécurisé<small>{paymentMode === 'stripe' ? 'Carte bancaire · Stripe' : 'Transactions chiffrées'}</small></span></div>
         </div>
         <div>
           <h4>Liens utiles</h4>

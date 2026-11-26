@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { LegalPage, ToComplete } from '@/components/LegalPage';
 import { getZones } from '@/lib/catalog';
@@ -10,7 +11,7 @@ export default async function ShippingPage() {
   const [zones, s] = await Promise.all([getZones(), getSettings()]);
   const m = (v: number) => formatMoney(v, s.commerce.currency, s.commerce.locale);
   return (
-    <LegalPage title="Livraison & retours" intro={s.company.delivery_area}>
+    <LegalPage image={PHOTOS.flatbed} title="Livraison & retours" intro={s.company.delivery_area}>
       <h2>Préparation et livraison</h2>
       <p>Chaque commande est préparée par notre équipe après confirmation du paiement, puis livrée à l&apos;adresse indiquée. Vous êtes informé(e) à chaque étape par e-mail et sur la page de suivi.</p>
       <h2>Zones et frais</h2>

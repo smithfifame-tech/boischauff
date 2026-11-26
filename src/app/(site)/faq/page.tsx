@@ -1,3 +1,4 @@
+import { img, PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHero } from '@/components/PageHero';
@@ -10,10 +11,15 @@ export default function FaqPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <PageHero title="Questions fréquentes" intro="Tout ce qu'il faut savoir avant de commander votre bois de chauffage." />
+      <PageHero image={PHOTOS.fireplaceLogs} title="Questions fréquentes" intro="Tout ce qu'il faut savoir avant de commander votre bois de chauffage." />
       <section className="section">
         <div className="container">
-          <div className="faq">{FAQ.map((f, i) => <details key={f.q} open={i === 0}><summary>{f.q}</summary><p>{f.a}</p></details>)}</div>
+          <div className="img-banner" data-reveal="zoom">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={img(PHOTOS.stove, 1400, 520)} alt="Poêle à bois allumé" loading="lazy" />
+            <span className="label">Toutes vos questions sur le bois de chauffage</span>
+          </div>
+          <div className="faq">{FAQ.map((f, i) => <details key={f.q} open={i === 0} data-reveal="up" style={{ ['--d' as string]: `${i * 0.05}s` }}><summary>{f.q}</summary><p>{f.a}</p></details>)}</div>
           <p style={{ textAlign: 'center', marginTop: 28 }}>Vous ne trouvez pas votre réponse ? <Link href="/contact" style={{ color: 'var(--orange)', fontWeight: 800 }}>Contactez-nous</Link></p>
         </div>
       </section>

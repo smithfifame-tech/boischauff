@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { LegalPage, ToComplete } from '@/components/LegalPage';
 import { getSettings } from '@/lib/settings';
@@ -7,7 +8,7 @@ export const metadata: Metadata = { title: 'Politique de confidentialité', alte
 export default async function PrivacyPage() {
   const s = await getSettings();
   return (
-    <LegalPage title="Politique de confidentialité">
+    <LegalPage image={PHOTOS.birch} title="Politique de confidentialité">
       <h2>Responsable du traitement</h2>
       <p>{s.company.name} — contact : {s.company.email || <ToComplete>e-mail</ToComplete>}.</p>
       <h2>Données collectées</h2>

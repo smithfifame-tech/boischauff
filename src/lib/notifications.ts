@@ -10,7 +10,7 @@ export function esc(s: unknown): string {
 }
 
 const fmtDate = (d: Date | string | null) =>
-  d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Porto-Novo' }) : '—';
+  d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' }) : '—';
 
 function layout(s: AllSettings, title: string, preheader: string, body: string) {
   const c = s.company;

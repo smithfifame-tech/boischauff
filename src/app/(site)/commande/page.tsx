@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { PageHero } from '@/components/PageHero';
 import { CheckoutForm } from '@/components/CheckoutForm';
@@ -16,7 +17,7 @@ export default async function CheckoutPage() {
   }
   return (
     <>
-      <PageHero title="Finaliser ma commande" intro="Vos informations de livraison, puis un devis détaillé vérifié par notre serveur avant le paiement." crumbs={[{ href: '/panier', label: 'Panier' }]} />
+      <PageHero image={PHOTOS.shed} title="Finaliser ma commande" intro="Vos informations de livraison, puis un devis détaillé vérifié par notre serveur avant le paiement." crumbs={[{ href: '/panier', label: 'Panier' }]} />
       <section className="section">
         <div className="container">
           <CheckoutForm user={user ? { firstName: user.first_name, lastName: user.last_name, email: user.email, phone: user.phone } : null}

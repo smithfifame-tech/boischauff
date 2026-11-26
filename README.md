@@ -5,6 +5,17 @@ Site e-commerce complet : catalogue, calculateur de devis (kg / tonnes, tarifs d
 - **En ligne** : https://boischauff.vercel.app
 - **Administration** : https://boischauff.vercel.app/admin
 
+## Paiement par carte — Stripe (recommandé pour la France et l'Europe)
+
+1. Créez un compte sur https://dashboard.stripe.com et récupérez la **clé secrète** (`sk_test_…` puis `sk_live_…`).
+2. Dans Stripe → Développeurs → Webhooks, ajoutez l'URL `https://VOTRE-DOMAINE/api/webhooks/stripe` avec les événements
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`,
+   puis copiez le **secret de signature** (`whsec_…`).
+3. Dans Vercel → Settings → Environment Variables : `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET`, puis redéployez.
+
+Le mode démonstration se désactive automatiquement. Une commande n'est marquée payée qu'après relecture de la session
+chez Stripe (statut `paid`, montant et devise identiques à la commande). SasPay (FCFA / Mobile Money) reste disponible dans le code.
+
 ## Pile technique
 
 | Élément | Choix |

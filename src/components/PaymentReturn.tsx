@@ -40,7 +40,7 @@ export function PaymentReturn({ orderNumber, token }: { orderNumber: string; tok
         <p className="hint">{reason || 'La transaction n\'a pas abouti.'} Aucun montant n&apos;a été validé.</p>
         <Link href={`/commande/paiement?${q}`} className="btn btn-primary">Réessayer le paiement</Link></>)}
       {state === 'pending' && (<><Clock size={56} color="var(--orange)" aria-hidden style={{ margin: '0 auto 10px' }} /><h2>Paiement en attente</h2>
-        <p className="hint">La passerelle n&apos;a pas encore confirmé votre paiement (cela peut prendre quelques minutes, notamment pour le mobile money). Vous recevrez un e-mail dès la confirmation.</p>
+        <p className="hint">La passerelle n&apos;a pas encore confirmé votre paiement (cela peut prendre quelques minutes, notamment pour un virement ou un paiement différé). Vous recevrez un e-mail dès la confirmation.</p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn btn-green" onClick={() => window.location.reload()}>Vérifier à nouveau</button>
           <Link href={`/commande/confirmation?${q}`} className="btn btn-ghost">Voir ma commande</Link>

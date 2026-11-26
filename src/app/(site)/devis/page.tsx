@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import { CheckCircle2 } from 'lucide-react';
 import { PageHero } from '@/components/PageHero';
@@ -17,7 +18,7 @@ export default async function QuotePage({ searchParams }: Props) {
   const m = (v: number) => formatMoney(v, s.commerce.currency, s.commerce.locale);
   return (
     <>
-      <PageHero title="Calculateur de devis" intro="Choisissez votre bois, la quantité en kilogrammes ou en tonnes et votre zone : le devis s'affiche instantanément, sans rechargement." />
+      <PageHero image={PHOTOS.stoveFlame} title="Calculateur de devis" intro="Choisissez votre bois, la quantité en kilogrammes ou en tonnes et votre zone : le devis s'affiche instantanément, sans rechargement." />
       <section className="section">
         <div className="container two-col">
           <div>

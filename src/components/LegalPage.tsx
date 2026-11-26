@@ -1,10 +1,11 @@
 import { PageHero } from './PageHero';
+import { PHOTOS } from '@/lib/img';
 
-export function LegalPage({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
+export function LegalPage({ title, intro, image = PHOTOS.texture, children }: { title: string; intro?: string; image?: string; children: React.ReactNode }) {
   return (
     <>
-      <PageHero title={title} intro={intro} />
-      <section className="section"><div className="container"><div className="prose card card-pad">{children}</div></div></section>
+      <PageHero image={image} title={title} intro={intro} />
+      <section className="section"><div className="container"><div className="prose card card-pad" data-reveal="up">{children}</div></div></section>
     </>
   );
 }

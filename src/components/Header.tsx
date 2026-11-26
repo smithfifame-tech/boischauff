@@ -38,7 +38,7 @@ export function Header({ name, tagline, logoUrl, loggedIn }: { name: string; tag
             <Link href={loggedIn ? '/compte' : '/compte/connexion'}><User size={15} aria-hidden /> <span className="hide-sm">Mon compte</span></Link>
             <Link href="/panier" className="cart-pill" aria-label={`Panier : ${count} article(s)`}>
               <ShoppingCart size={18} aria-hidden />
-              {count > 0 && <span className="cart-badge">{count}</span>}
+              {count > 0 && <span key={count} className="cart-badge">{count}</span>}
             </Link>
           </div>
         </div>
@@ -53,7 +53,7 @@ export function Header({ name, tagline, logoUrl, loggedIn }: { name: string; tag
           <div className="header-actions">
             <Link href="/panier" className="header-cart" aria-label={`Panier : ${count} article(s)`}>
               <ShoppingCart size={22} aria-hidden />
-              {count > 0 && <span className="cart-badge">{count}</span>}
+              {count > 0 && <span key={count} className="cart-badge">{count}</span>}
             </Link>
             <button className="menu-toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Menu">
               {open ? <X size={24} /> : <Menu size={24} />}

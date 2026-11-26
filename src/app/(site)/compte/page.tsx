@@ -1,3 +1,4 @@
+import { PHOTOS } from '@/lib/img';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -26,7 +27,7 @@ export default async function AccountPage() {
   const badge = (st: string) => (st === 'delivered' || st === 'paid' ? 'b-green' : st === 'cancelled' ? 'b-red' : st === 'shipping' || st === 'preparing' ? 'b-blue' : 'b-orange');
   return (
     <>
-      <PageHero title={`Bonjour ${user.first_name || ''}`.trim()} intro="Votre profil, vos adresses, vos commandes et vos reçus." />
+      <PageHero image={PHOTOS.cabinStove} title={`Bonjour ${user.first_name || ''}`.trim()} intro="Votre profil, vos adresses, vos commandes et vos reçus." />
       <section className="section">
         <div className="container two-col">
           <div>
