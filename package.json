@@ -13,7 +13,7 @@
     "vercel-build": "node scripts/migrate.mjs && next build"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
