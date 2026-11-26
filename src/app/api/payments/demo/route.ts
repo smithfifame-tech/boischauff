@@ -15,7 +15,7 @@ const schema = z.object({
 });
 
 /**
- * Simulation de paiement — disponible UNIQUEMENT quand SaaSPay n'est pas configuré
+ * Simulation de paiement — disponible UNIQUEMENT quand SasPay n'est pas configuré
  * et que PAYMENT_DEMO_MODE n'est pas "off". Les commandes concernées sont marquées "démo".
  */
 export const POST = apiRoute(async (req) => {

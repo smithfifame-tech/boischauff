@@ -15,7 +15,7 @@ export function Footer({ s, paymentMode }: { s: AllSettings; paymentMode: string
           <p style={{ marginTop: 16, fontSize: '.95rem', color: '#CFE0D3' }}>
             Bois de chauffage sélectionné, séché et livré chez vous. Commandez en ligne en quelques clics.
           </p>
-          <div className="secure-badge"><ShieldCheck size={26} aria-hidden /><span>Paiement sécurisé<small>{paymentMode === 'saaspay' ? 'SaaSPay' : 'Transactions chiffrées'}</small></span></div>
+          <div className="secure-badge"><ShieldCheck size={26} aria-hidden /><span>Paiement sécurisé<small>{paymentMode === 'saspay' ? 'SasPay — Mobile Money' : 'Transactions chiffrées'}</small></span></div>
         </div>
         <div>
           <h4>Liens utiles</h4>

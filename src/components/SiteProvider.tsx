@@ -14,7 +14,7 @@ interface Ctx {
   zones: PublicZone[];
   commerce: SiteCommerce;
   company: SiteCompany;
-  paymentMode: 'saaspay' | 'demo' | 'none';
+  paymentMode: 'saspay' | 'demo' | 'none';
   items: CartItem[];
   ready: boolean;
   count: number;

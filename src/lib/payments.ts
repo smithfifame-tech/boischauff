@@ -7,157 +7,160 @@ import { siteUrl } from './settings';
 import { toCents } from './pricing';
 
 /* ==========================================================================
-   Passerelle SaaSPay
+   Passerelle SasPay (https://docs.saspay.me) — MTN MoMo, Moov Money, Celtiis Cash…
    --------------------------------------------------------------------------
-   Toutes les valeurs sensibles sont lues côté serveur uniquement (variables
-   d'environnement). Les chemins d'API sont configurables afin de s'aligner
-   exactement sur la documentation officielle fournie avec le compte marchand.
+   - Session de paiement hébergée : POST /checkout-sessions/ → checkout_url.
+   - L'environnement dépend de l'HÔTE : api.saspay.me = réel, sandbox-api.saspay.me = test.
+     Une clé sk_live_ n'est acceptée qu'en "live", une clé sk_test_ qu'en "sandbox".
+   - Webhook : en-têtes X-Webhook-Signature (HMAC-SHA256 hex de `${timestamp}.${corps}`)
+     et X-Webhook-Timestamp. La transaction est TOUJOURS relue par l'API authentifiée.
+   - Montants transmis en chaînes décimales (« 10000.00 »).
+   Les clés restent côté serveur (variables d'environnement), jamais dans le navigateur.
    ========================================================================== */
 
-export type ProviderName = 'saaspay' | 'demo' | 'none';
+export type ProviderName = 'saspay' | 'demo' | 'none';
 
-export function saaspayConfig() {
+/** Devises acceptées par SasPay (le site doit être configuré dans l'une d'elles). */
+export const SASPAY_CURRENCIES = ['XOF', 'XAF', 'GHS', 'NGN', 'KES', 'UGX', 'TZS', 'RWF', 'ZMW', 'MWK', 'MZN', 'GNF', 'SLE', 'CDF', 'USD', 'INR'];
+
+export function saspayConfig() {
+  const env = (process.env.SASPAY_ENVIRONMENT === 'live' ? 'live' : 'sandbox') as 'live' | 'sandbox';
   return {
-    baseUrl: (process.env.SAASPAY_API_BASE_URL || '').replace(/\/$/, ''),
-    secretKey: process.env.SAASPAY_SECRET_KEY || '',
-    webhookSecret: process.env.SAASPAY_WEBHOOK_SECRET || '',
-    createPath: process.env.SAASPAY_CREATE_PATH || '/v1/payments',
-    statusPath: process.env.SAASPAY_STATUS_PATH || '/v1/payments/{id}',
-    signatureHeader: (process.env.SAASPAY_SIGNATURE_HEADER || 'x-saaspay-signature').toLowerCase(),
-    merchantId: process.env.SAASPAY_MERCHANT_ID || '',
+    env,
+    baseUrl: (process.env.SASPAY_API_BASE_URL || (env === 'live' ? 'https://api.saspay.me/api/v1' : 'https://sandbox-api.saspay.me/api/v1')).replace(/\/$/, ''),
+    secretKey: process.env.SASPAY_SECRET_KEY || '',
+    webhookSecret: process.env.SASPAY_WEBHOOK_SECRET || '',
   };
 }
 
-export function saaspayConfigured() {
-  const c = saaspayConfig();
-  return Boolean(c.baseUrl && c.secretKey && c.webhookSecret);
+/** Clé de test uniquement vers le bac à sable, clé réelle uniquement vers l'hôte réel. */
+export function saspayKeyMatchesEnv() {
+  const c = saspayConfig();
+  if (!c.secretKey) return false;
+  if (process.env.SASPAY_API_BASE_URL) return true; // hôte personnalisé (tests)
+  return c.env === 'live' ? c.secretKey.startsWith('sk_live_') : c.secretKey.startsWith('sk_test_');
 }
 
-/** Mode démonstration : actif uniquement si SaaSPay n'est pas configuré et si PAYMENT_DEMO_MODE ≠ "off". */
+export function saspayConfigured() {
+  const c = saspayConfig();
+  return Boolean(c.secretKey && c.webhookSecret && saspayKeyMatchesEnv());
+}
+
+/** Mode démonstration : actif uniquement si SasPay n'est pas configuré et si PAYMENT_DEMO_MODE ≠ "off". */
 export function demoAllowed() {
-  return !saaspayConfigured() && (process.env.PAYMENT_DEMO_MODE || 'auto') !== 'off';
+  return !saspayConfigured() && (process.env.PAYMENT_DEMO_MODE || 'auto') !== 'off';
 }
 
 export function activeProvider(): ProviderName {
-  if (saaspayConfigured()) return 'saaspay';
+  if (saspayConfigured()) return 'saspay';
   if (demoAllowed()) return 'demo';
   return 'none';
 }
 
 type ProviderStatus = 'succeeded' | 'failed' | 'pending';
 
-function mapStatus(raw: unknown): ProviderStatus {
-  const s = String(raw ?? '').toLowerCase();
-  if (['paid', 'succeeded', 'success', 'successful', 'completed', 'complete', 'approved', 'captured', 'transferred'].includes(s)) return 'succeeded';
-  if (['failed', 'failure', 'declined', 'refused', 'rejected', 'canceled', 'cancelled', 'expired', 'error'].includes(s)) return 'failed';
-  return 'pending';
+class SaspayApiError extends Error {
+  constructor(readonly status: number, message: string) { super(message); }
 }
 
-function pick(obj: unknown, paths: string[]): unknown {
-  for (const p of paths) {
-    let cur: unknown = obj;
-    for (const k of p.split('.')) {
-      if (cur && typeof cur === 'object' && k in (cur as Record<string, unknown>)) cur = (cur as Record<string, unknown>)[k];
-      else { cur = undefined; break; }
-    }
-    if (cur !== undefined && cur !== null && cur !== '') return cur;
-  }
-  return undefined;
-}
-
-async function saaspayRequest(method: 'GET' | 'POST', path: string, body?: unknown) {
-  const c = saaspayConfig();
+async function saspayCall<T>(method: 'GET' | 'POST', path: string, body?: unknown, idempotencyKey?: string): Promise<T> {
+  const c = saspayConfig();
+  if (!saspayKeyMatchesEnv()) throw new Error('Clé SasPay absente ou incohérente avec SASPAY_ENVIRONMENT.');
+  const headers: Record<string, string> = { Authorization: `Bearer ${c.secretKey}`, 'Content-Type': 'application/json', Accept: 'application/json' };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
   const res = await fetch(`${c.baseUrl}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${c.secretKey}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(c.merchantId ? { 'X-Merchant-Id': c.merchantId } : {}),
-      ...(body && typeof body === 'object' && 'reference' in body ? { 'Idempotency-Key': String((body as { reference: string }).reference) } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    cache: 'no-store',
-    signal: AbortSignal.timeout(20_000),
+    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', signal: AbortSignal.timeout(20_000),
   });
-  const text = await res.text();
-  let json: unknown = null;
-  try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text.slice(0, 500) }; }
-  if (!res.ok) {
-    const msg = String(pick(json, ['message', 'error.message', 'error', 'detail']) ?? `HTTP ${res.status}`);
-    throw new Error(`SaaSPay ${res.status}: ${msg}`.slice(0, 300));
+  const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  // Enveloppe documentée { success, data } — certains points d'accès renvoient l'objet à plat
+  if (!res.ok || json.success === false) {
+    const err = (json.error && typeof json.error === 'object' ? json.error : json) as Record<string, unknown>;
+    const msg = typeof err.message === 'string' ? err.message : JSON.stringify(err).slice(0, 200);
+    throw new SaspayApiError(res.status, `SasPay ${res.status}: ${msg}`.slice(0, 300));
   }
-  return json;
+  return (json.success === true && json.data && typeof json.data === 'object' ? json.data : json) as T;
 }
 
-async function saaspayCreate(order: FullOrder, txPublicId: string) {
+/** Montant en chaîne décimale : « 10000.00 ». */
+export function toDecimalString(amount: number): string {
+  return (Math.round(amount * 100) / 100).toFixed(2);
+}
+
+const DIAL_CODES: Record<string, string> = { '229': 'BJ', '228': 'TG', '227': 'NE', '226': 'BF', '234': 'NG', '225': 'CI', '221': 'SN', '223': 'ML', '237': 'CM' };
+export function countryFromPhone(phone: string): string {
+  const m = /^\+?(\d{3})/.exec(phone.replace(/[\s().-]/g, ''));
+  return (m && phone.trim().startsWith('+') && DIAL_CODES[m[1]]) || 'BJ';
+}
+/** Numéros béninois : format à 10 chiffres « 01 » + 8 chiffres depuis le 30/11/2024. */
+export function normalizePhone(phone: string): string {
+  const p = phone.replace(/[\s().-]/g, '');
+  const m = /^\+229(\d+)$/.exec(p);
+  if (m && m[1].length === 8) return `+22901${m[1]}`;
+  return p;
+}
+
+/** Référence BoisChauff+ insérée dans la description de la session (relue via la transaction). */
+const REF_RE = /BC:(TX[A-Z0-9]{6,40})/;
+export function extractTxRef(text: unknown): string | undefined {
+  return typeof text === 'string' ? REF_RE.exec(text)?.[1] : undefined;
+}
+
+async function saspayCreate(order: FullOrder, txPublicId: string) {
+  if (!SASPAY_CURRENCIES.includes(order.currency.toUpperCase())) {
+    throw new HttpError(422, `La devise ${order.currency} n'est pas acceptée par SasPay. Configurez le site en FCFA (XOF) dans l'administration.`);
+  }
   const base = siteUrl();
-  const payload = {
-    amount: order.total_amount,
-    amount_minor: toCents(order.total_amount ?? 0),
-    currency: order.currency,
-    reference: txPublicId,
-    order_id: order.order_number,
-    description: `Commande ${order.order_number} — bois de chauffage`,
-    customer: {
-      email: order.customer_email,
-      first_name: order.customer_first_name,
-      last_name: order.customer_last_name,
-      phone: order.customer_phone,
-    },
+  const ref = ` · Réf. BC:${txPublicId}`;
+  const description = `Commande ${order.order_number} — bois de chauffage`;
+  const session = await saspayCall<{ id: string; checkout_url: string }>('POST', '/checkout-sessions/', {
+    amount: toDecimalString(order.total_amount ?? 0),
+    currency: order.currency.toUpperCase(),
+    country: countryFromPhone(order.customer_phone),
+    description: `${description.slice(0, 250 - ref.length)}${ref}`,
+    customer_email: order.customer_email,
+    customer_name: `${order.customer_first_name} ${order.customer_last_name}`.trim().slice(0, 120),
+    customer_phone: normalizePhone(order.customer_phone),
     return_url: `${base}/paiement/retour?order=${encodeURIComponent(order.order_number)}&t=${encodeURIComponent(order.access_token)}`,
-    cancel_url: `${base}/commande/paiement?order=${encodeURIComponent(order.order_number)}&t=${encodeURIComponent(order.access_token)}&cancelled=1`,
-    webhook_url: `${base}/api/webhooks/saaspay`,
-    callback_url: `${base}/api/webhooks/saaspay`,
-    metadata: { order_number: order.order_number, reference: txPublicId },
-  };
-  const res = await saaspayRequest('POST', saaspayConfig().createPath, payload);
-  const providerId = pick(res, ['id', 'data.id', 'transaction_id', 'data.transaction_id', 'payment_id', 'data.payment_id', 'token', 'data.token']);
-  const checkoutUrl = pick(res, ['checkout_url', 'data.checkout_url', 'payment_url', 'data.payment_url', 'url', 'data.url', 'redirect_url', 'data.redirect_url', 'links.checkout']);
-  if (!providerId || !checkoutUrl) throw new Error('Réponse SaaSPay inattendue : identifiant ou URL de paiement manquant.');
-  const url = String(checkoutUrl);
-  if (!/^https:\/\//i.test(url)) throw new Error('URL de paiement SaaSPay non sécurisée.');
-  return { providerTxId: String(providerId), checkoutUrl: url, raw: res };
+    metadata: { tx: txPublicId, order_number: order.order_number, source: 'boischauff' },
+    expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+  }, `boischauff-${txPublicId}`);
+  if (!session?.id || !session.checkout_url) throw new Error('Réponse SasPay incomplète (checkout_url).');
+  if (!/^https:\/\//i.test(session.checkout_url)) throw new Error('URL de paiement SasPay non sécurisée.');
+  return { providerTxId: String(session.id), checkoutUrl: session.checkout_url };
 }
 
-export async function saaspayFetchStatus(providerTxId: string) {
-  const path = saaspayConfig().statusPath.replace('{id}', encodeURIComponent(providerTxId));
-  const res = await saaspayRequest('GET', path);
+/** État d'une session de paiement (SasPay revérifie auprès de l'opérateur). */
+export async function saspaySessionStatus(sessionId: string): Promise<{ status: ProviderStatus; raw: unknown }> {
+  const s = await saspayCall<{ status?: string; transaction_status?: string | null }>('GET', `/checkout-sessions/${encodeURIComponent(sessionId)}/status/`);
+  if (s.status === 'PAID' && s.transaction_status === 'SUCCESS') return { status: 'succeeded', raw: s };
+  if (s.status === 'EXPIRED' || s.status === 'CANCELLED') return { status: 'failed', raw: s };
+  return { status: 'pending', raw: s };
+}
+
+/** Relecture authentifiée d'une transaction notifiée par webhook. */
+export async function saspayVerifyTransaction(trxId: string) {
+  const t = await saspayCall<{ id: string; status?: string; currency?: string; description?: string; requested_amount?: string; type?: string; transaction_type?: string; metadata?: { tx?: string } | null }>(
+    'GET', `/payments/${encodeURIComponent(trxId)}/verify/`);
+  const amount = typeof t.requested_amount === 'string' && /^\d+(\.\d+)?$/.test(t.requested_amount) ? Number(t.requested_amount) : null;
   return {
-    status: mapStatus(pick(res, ['status', 'data.status', 'payment_status', 'data.payment_status', 'state'])),
-    amount: pick(res, ['amount', 'data.amount']) as number | string | undefined,
-    amountMinor: pick(res, ['amount_minor', 'data.amount_minor']) as number | undefined,
-    currency: pick(res, ['currency', 'data.currency']) as string | undefined,
-    method: String(pick(res, ['payment_method', 'data.payment_method', 'method', 'data.method', 'channel', 'data.channel']) ?? ''),
-    reference: pick(res, ['reference', 'data.reference', 'metadata.reference', 'data.metadata.reference']) as string | undefined,
-    raw: res,
+    status: (t.status === 'SUCCESS' ? 'succeeded' : t.status === 'FAILED' ? 'failed' : 'pending') as ProviderStatus,
+    currency: t.currency,
+    amountCents: amount === null ? null : toCents(amount),
+    txRef: extractTxRef(t.description) ?? (typeof t.metadata?.tx === 'string' ? t.metadata.tx : undefined),
+    raw: t,
   };
 }
 
-/** Vérifie la signature HMAC-SHA256 d'un webhook (formats "hex", "sha256=hex" ou "t=…,v1=…"). */
-export function verifyWebhookSignature(rawBody: string, header: string | null): boolean {
-  const secret = saaspayConfig().webhookSecret;
-  if (!secret || !header) return false;
-  const h = header.trim();
-  if (h.includes('v1=')) {
-    const parts = Object.fromEntries(h.split(',').map((p) => p.trim().split('=') as [string, string]));
-    const t = Number(parts.t);
-    if (!t || Math.abs(Date.now() / 1000 - t) > 300) return false;
-    const expected = crypto.createHmac('sha256', secret).update(`${parts.t}.${rawBody}`).digest('hex');
-    return safeEqual(expected, String(parts.v1 || ''));
-  }
-  const sig = h.startsWith('sha256=') ? h.slice(7) : h;
-  const hex = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  const b64 = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
-  return safeEqual(hex, sig) || safeEqual(b64, sig);
-}
-
-export function extractWebhook(body: unknown) {
-  return {
-    eventId: String(pick(body, ['id', 'event_id', 'event.id']) ?? ''),
-    reference: pick(body, ['data.reference', 'reference', 'data.metadata.reference', 'metadata.reference', 'data.object.reference']) as string | undefined,
-    providerTxId: pick(body, ['data.id', 'data.transaction_id', 'transaction_id', 'payment_id', 'data.object.id']) as string | undefined,
-  };
+/** Signature SasPay : HMAC-SHA256 (hex) de `${X-Webhook-Timestamp}.${corps brut}`, tolérance 5 min. */
+export function verifyWebhookSignature(rawBody: string, signature: string | null, timestamp: string | null): boolean {
+  const secret = saspayConfig().webhookSecret;
+  if (!secret || !signature || !timestamp || !/^\d{1,16}$/.test(timestamp.trim())) return false;
+  const ts = timestamp.trim();
+  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
+  const candidates = signature.split(',').map((v) => v.trim().replace(/^(sha256|v1|s)=/i, '').toLowerCase()).filter(Boolean);
+  if (!candidates.some((c) => safeEqual(c, expected))) return false;
+  const seconds = ts.length >= 13 ? Math.floor(Number(ts) / 1000) : Number(ts);
+  return Math.abs(Date.now() / 1000 - seconds) <= 300;
 }
 
 /* ==========================================================================
@@ -196,8 +199,8 @@ export async function initPayment(orderNumber: string, accessToken: string): Pro
   try {
     let providerTxId: string;
     let checkoutUrl: string;
-    if (provider === 'saaspay') {
-      const r = await saaspayCreate(order, publicId);
+    if (provider === 'saspay') {
+      const r = await saspayCreate(order, publicId);
       providerTxId = r.providerTxId;
       checkoutUrl = r.checkoutUrl;
     } else {
@@ -211,6 +214,7 @@ export async function initPayment(orderNumber: string, accessToken: string): Pro
   } catch (e) {
     const reason = (e as Error).message.slice(0, 300);
     console.error('[payment] création impossible', reason);
+    if (e instanceof HttpError) { await db()`update payment_transactions set status = 'failed', failure_reason = ${reason}, updated_at = now() where public_id = ${publicId}`; throw e; }
     await db()`update payment_transactions set status = 'failed', failure_reason = ${reason}, updated_at = now() where public_id = ${publicId}`;
     throw new HttpError(502, 'La passerelle de paiement est momentanément indisponible. Merci de réessayer dans quelques instants.');
   }
@@ -299,18 +303,19 @@ export async function settleTransaction(publicId: string, verified: {
   return result;
 }
 
-/** Interroge la passerelle pour la dernière transaction ouverte d'une commande (page de retour). */
+/** Interroge la passerelle pour les dernières transactions ouvertes d'une commande (page de retour). */
 export async function refreshOrderPayment(orderId: number): Promise<SettleResult | null> {
-  const txs = await db()<{ public_id: string; provider: string; provider_tx_id: string | null }[]>`
-    select public_id, provider, provider_tx_id from payment_transactions
-    where order_id = ${orderId} and status in ('created','pending') and provider = 'saaspay' and provider_tx_id is not null
+  const txs = await db()<{ public_id: string; provider_tx_id: string | null }[]>`
+    select public_id, provider_tx_id from payment_transactions
+    where order_id = ${orderId} and status in ('created','pending') and provider = 'saspay' and provider_tx_id is not null
     order by created_at desc limit 3`;
   let last: SettleResult | null = null;
   for (const t of txs) {
     try {
-      const s = await saaspayFetchStatus(t.provider_tx_id as string);
-      const amountCents = s.amountMinor !== undefined ? Number(s.amountMinor) : s.amount !== undefined ? toCents(Number(s.amount)) : null;
-      last = await settleTransaction(t.public_id, { status: s.status, amountCents, currency: s.currency, method: s.method, isDemo: false, raw: s.raw });
+      const s = await saspaySessionStatus(t.provider_tx_id as string);
+      // Le montant de la session est fixé à sa création (montant exact de la commande)
+      last = await settleTransaction(t.public_id, { status: s.status, amountCents: null, currency: null, method: 'SasPay', isDemo: false, raw: s.raw,
+        reason: s.status === 'failed' ? 'Session de paiement expirée ou annulée' : undefined });
       if (last.outcome === 'paid' || last.outcome === 'already_paid') break;
     } catch (e) {
       console.error('[payment] vérification impossible', (e as Error).message);

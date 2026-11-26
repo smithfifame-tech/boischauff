@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiRoute, HttpError, readJson, safeEqual } from '@/lib/security';
 import { getFullOrder } from '@/lib/orders';
-import { refreshOrderPayment, saaspayConfigured } from '@/lib/payments';
+import { refreshOrderPayment, saspayConfigured } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -14,7 +14,7 @@ export const POST = apiRoute(async (req) => {
   const { orderNumber, token } = schema.parse(await readJson(req));
   let order = await getFullOrder({ number: orderNumber });
   if (!order || !safeEqual(order.access_token, token)) throw new HttpError(404, 'Commande introuvable.');
-  if (order.payment_status !== 'paid' && saaspayConfigured()) {
+  if (order.payment_status !== 'paid' && saspayConfigured()) {
     await refreshOrderPayment(order.id);
     order = await getFullOrder({ id: order.id });
   }

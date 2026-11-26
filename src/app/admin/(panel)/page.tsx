@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
   return (
     <>
       <div className="admin-head"><h1>Tableau de bord</h1><Link href="/admin/commandes" className="btn btn-green btn-sm">Toutes les commandes</Link></div>
-      {provider !== 'saaspay' && <p className="alert alert-warn" style={{ marginBottom: 12 }}>Paiement : {provider === 'demo' ? 'mode DÉMONSTRATION actif (SaaSPay non configuré).' : 'aucune passerelle active.'} Renseignez les variables SAASPAY_* pour encaisser de vrais paiements.</p>}
+      {provider !== 'saspay' && <p className="alert alert-warn" style={{ marginBottom: 12 }}>Paiement : {provider === 'demo' ? 'mode DÉMONSTRATION actif (SasPay non configuré).' : 'aucune passerelle active.'} Renseignez SASPAY_SECRET_KEY, SASPAY_WEBHOOK_SECRET et SASPAY_ENVIRONMENT dans Vercel pour encaisser de vrais paiements.</p>}
       {transport === 'none' && <p className="alert alert-warn" style={{ marginBottom: 12 }}>E-mails : aucun service configuré (SMTP ou Resend). Les envois sont journalisés comme « non envoyés » et peuvent être relancés après configuration.</p>}
       {mail.failed > 0 && <p className="alert alert-error" style={{ marginBottom: 12 }}>{mail.failed} e-mail(s) non envoyé(s) ces 7 derniers jours. <Link href="/admin/emails" style={{ textDecoration: 'underline' }}>Voir le journal</Link></p>}
       <div className="kpis">{kpis.map(([l, v]) => <div className="kpi" key={String(l)}><small>{l}</small><b>{v}</b></div>)}</div>

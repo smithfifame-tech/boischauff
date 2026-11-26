@@ -96,7 +96,7 @@ export async function buildReceiptPdf(order: FullOrder, settings: AllSettings): 
     ['Devis', order.quote_number],
     ['Date de commande', fmtDate(order.created_at)],
     ['Date de paiement', fmtDate(order.paid_at)],
-    ['Moyen de paiement', order.payment?.provider === 'demo' ? 'Démonstration (aucun encaissement)' : `SaaSPay${order.payment?.method ? ` — ${order.payment.method}` : ''}`],
+    ['Moyen de paiement', order.payment?.provider === 'demo' ? 'Démonstration (aucun encaissement)' : `SasPay${order.payment?.method ? ` — ${order.payment.method}` : ''}`],
     ['Référence transaction', order.payment?.transaction_ref ?? '-'],
   ];
   let iy = y + 10;

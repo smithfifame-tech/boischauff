@@ -44,7 +44,7 @@ export default async function AdminOrder({ params }: Props) {
             <h2>Paiement</h2>
             {o.payment ? (
               <dl className="kv">
-                <dt>Passerelle</dt><dd>{o.payment.provider === 'demo' ? 'Démonstration (aucun encaissement)' : 'SaaSPay'}</dd>
+                <dt>Passerelle</dt><dd>{o.payment.provider === 'demo' ? 'Démonstration (aucun encaissement)' : 'SasPay'}</dd>
                 <dt>Montant</dt><dd>{m(o.payment.amount)}</dd>
                 <dt>Référence</dt><dd style={{ wordBreak: 'break-all' }}>{o.payment.transaction_ref}</dd>
                 <dt>Moyen</dt><dd>{o.payment.method || '—'}</dd>

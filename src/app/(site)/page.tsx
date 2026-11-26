@@ -50,7 +50,7 @@ export default async function HomePage() {
 
       <section className="trust" aria-label="Nos engagements">
         <div className="container">
-          <div className="trust-item"><ShieldCheck size={34} aria-hidden /><span>Paiement sécurisé<small>{provider === 'saaspay' ? 'SaaSPay' : 'Vérifié côté serveur'}</small></span></div>
+          <div className="trust-item"><ShieldCheck size={34} aria-hidden /><span>Paiement sécurisé<small>{provider === 'saspay' ? 'SasPay — Mobile Money' : 'Vérifié côté serveur'}</small></span></div>
           <div className="trust-item"><Truck size={34} aria-hidden /><span>Livraison rapide<small>{s.company.delivery_area || 'À domicile'}</small></span></div>
           <div className="trust-item"><Headset size={34} aria-hidden /><span>Service client<small>À votre écoute</small></span></div>
           <div className="trust-item"><BadgeCheck size={34} aria-hidden /><span>Qualité garantie<small>Bois sélectionné & séché</small></span></div>
