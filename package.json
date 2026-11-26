@@ -1,0 +1,38 @@
+{
+  "name": "boischauff",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BoisChauff+ — boutique e-commerce de bois de chauffage (Next.js + PostgreSQL)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node scripts/migrate.mjs",
+    "admin:create": "node scripts/create-admin.mjs",
+    "vercel-build": "node scripts/migrate.mjs && next build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.18",
+    "lucide-react": "^1.81.0",
+    "next": "15.5.29",
+    "nodemailer": "^10.6.1",
+    "pdf-lib": "^1.17.1",
+    "postgres": "^3.4.9",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.11",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

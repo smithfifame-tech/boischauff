@@ -1,0 +1,10 @@
+export const FAQ = [
+  { q: 'Comment est calculé le prix de mon bois ?', a: 'Le prix du bois est égal à la quantité en kilogrammes multipliée par le prix du kilogramme du produit choisi. Les tonnes sont converties automatiquement (1 tonne = 1 000 kg). Des tarifs dégressifs s\'appliquent automatiquement sur les gros volumes.' },
+  { q: 'Quelle est la quantité minimum de commande ?', a: 'Chaque produit a une quantité minimum (en général 50 kg) et la commande doit atteindre le montant minimum indiqué sur le calculateur. Vous pouvez commander jusqu\'à plusieurs tonnes ; au-delà du maximum affiché, contactez-nous.' },
+  { q: 'Comment sont calculés les frais de livraison ?', a: 'Selon votre zone : tarif fixe, tarif selon la distance, livraison offerte au-delà d\'un certain montant ou retrait gratuit. Si votre zone n\'est pas listée, notre équipe calcule les frais et vous les communique avant tout paiement.' },
+  { q: 'Le paiement en ligne est-il sécurisé ?', a: 'Oui. Le paiement est traité par notre passerelle de paiement : aucune donnée bancaire ne transite par notre site. Votre commande n\'est marquée payée qu\'après confirmation vérifiée par notre serveur auprès de la passerelle.' },
+  { q: 'Vais-je recevoir un reçu ?', a: 'Oui. Dès la confirmation du paiement, vous recevez un e-mail récapitulatif avec votre reçu PDF. Il reste téléchargeable depuis votre page de confirmation et votre espace client.' },
+  { q: 'Comment suivre ma commande ?', a: 'Rendez-vous sur la page « Suivi de commande » avec votre numéro de commande et l\'e-mail ou le téléphone utilisé. Vous voyez chaque étape : commande reçue, paiement confirmé, préparation, livraison, livrée.' },
+  { q: 'Dois-je créer un compte pour commander ?', a: 'Non, la commande sans compte est possible. Un compte vous permet cependant de retrouver vos adresses, l\'historique de vos commandes et vos reçus.' },
+  { q: 'Quel bois choisir ?', a: 'Le bois dur et le chêne offrent une combustion longue et beaucoup de chaleur ; le bois sec et premium démarrent vite avec peu de fumée ; le bois d\'allumage sert à lancer le feu. Le bois mixte est le meilleur compromis au quotidien.' },
+];
