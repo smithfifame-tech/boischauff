@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { db, num, numOrNull, type Sql } from './db';
 import type { DeliveryZone, PricedProduct, PriceRule } from './pricing';
 
@@ -78,7 +79,18 @@ function mapProduct(p: Row, rules: Row[], images: Row[]): Product {
   };
 }
 
-export async function getProducts(opts: { includeInactive?: boolean } = {}, sql: Sql = db()): Promise<Product[]> {
+/** Catalogue actif mis en cache pour la durée d'une requête (layout + page = une seule lecture). */
+const activeProducts = cache(() => loadProducts({}, db()));
+const activeZones = cache(() => loadZones({}, db()));
+
+export function getProducts(opts: { includeInactive?: boolean } = {}, sql?: Sql): Promise<Product[]> {
+  return !sql && !opts.includeInactive ? activeProducts() : loadProducts(opts, sql ?? db());
+}
+export function getZones(opts: { includeInactive?: boolean } = {}, sql?: Sql): Promise<Zone[]> {
+  return !sql && !opts.includeInactive ? activeZones() : loadZones(opts, sql ?? db());
+}
+
+async function loadProducts(opts: { includeInactive?: boolean }, sql: Sql): Promise<Product[]> {
   const products = opts.includeInactive
     ? await sql<Row[]>`select * from products order by sort_order, id`
     : await sql<Row[]>`select * from products where is_active order by sort_order, id`;
@@ -131,7 +143,7 @@ export function mapZone(z: Row): Zone {
   };
 }
 
-export async function getZones(opts: { includeInactive?: boolean } = {}, sql: Sql = db()): Promise<Zone[]> {
+async function loadZones(opts: { includeInactive?: boolean }, sql: Sql): Promise<Zone[]> {
   const rows = opts.includeInactive
     ? await sql<Row[]>`select * from delivery_zones order by sort_order, id`
     : await sql<Row[]>`select * from delivery_zones where is_active order by sort_order, id`;

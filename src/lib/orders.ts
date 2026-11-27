@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { db, num, numOrNull, type Sql } from './db';
 import { getProducts, getZones, mapZone } from './catalog';
-import { getSettings } from './settings';
+import { type AllSettings, getSettings } from './settings';
 import { fromCents, quoteOrder, toCents, type Unit } from './pricing';
 import { HttpError, randomToken, safeEqual } from './security';
 
@@ -85,8 +85,10 @@ export const checkoutSchema = z.object({
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 
 // ------------------------------------------------------------------ chiffrage serveur
-export async function computeQuote(items: { productId: number; quantity: number; unit: Unit }[], zoneId: number | null, sql: Sql = db()) {
-  const [products, zones, settings] = await Promise.all([getProducts({}, sql), getZones({}, sql), getSettings()]);
+export async function computeQuote(items: { productId: number; quantity: number; unit: Unit }[], zoneId: number | null, sql?: Sql, preloadedSettings?: AllSettings) {
+  // Réglages lus AVANT toute transaction (évite d'attendre une 2e connexion depuis une transaction).
+  const settings = preloadedSettings ?? await getSettings();
+  const [products, zones] = await Promise.all([getProducts({}, sql), getZones({}, sql)]);
   const zone = zoneId ? zones.find((z) => z.id === zoneId) ?? null : null;
   if (zoneId && !zone) throw new HttpError(422, 'Zone de livraison inconnue.');
   const quote = quoteOrder(products, items, zone, {
@@ -117,7 +119,7 @@ export async function createOrder(input: CheckoutInput, userId: number | null): 
       return { id: Number(dup[0].id), orderNumber: dup[0].order_number, accessToken: dup[0].access_token, status: dup[0].status, existing: true };
     }
 
-    const { quote, zone } = await computeQuote(input.items, input.zoneId, sql as unknown as Sql);
+    const { quote, zone } = await computeQuote(input.items, input.zoneId, sql as unknown as Sql, settings);
     if (!quote.ok) throw new HttpError(422, quote.errors[0], quote.errors);
 
     const numbers = newOrderNumbers();

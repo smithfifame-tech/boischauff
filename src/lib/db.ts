@@ -29,9 +29,10 @@ function createClient() {
   const options = {
     // Requêtes préparées seulement hors pooler en mode transaction
     prepare: !transactionPooler,
-    max: Number(process.env.DATABASE_POOL_MAX || (session ? 3 : 5)),
+    // Mode session : 15 clients maximum pour tout le projet Supabase → 1 connexion par instance.
+    max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 5)),
     max_pipeline: transactionPooler ? 1 : 100,
-    idle_timeout: 20,
+    idle_timeout: session ? 5 : 20,
     connect_timeout: 15,
     ssl: isLocal || process.env.DATABASE_SSL === 'disable' ? false : 'require',
     // Toutes les tables vivent dans le schéma "boischauff"
