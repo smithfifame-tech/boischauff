@@ -9,7 +9,7 @@ import { PayButton } from '@/components/PayButton';
 import { PrintButton } from '@/components/PrintButton';
 import { loadOrderForPage } from '@/lib/order-access';
 import { getSettings } from '@/lib/settings';
-import { activeProvider } from '@/lib/payments';
+import { activeProvider, chargeFor, EUR_XOF } from '@/lib/payments';
 import { formatMoney } from '@/lib/pricing';
 
 export const metadata: Metadata = { title: 'Paiement sécurisé', robots: { index: false } };
@@ -54,7 +54,13 @@ export default async function PaymentPage({ searchParams }: Props) {
                   <p style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--green)', fontFamily: 'var(--font-title)', margin: '0 0 12px' }}>{formatMoney(o.total_amount ?? 0, o.currency, s.commerce.locale)}</p>
                   {sp.cancelled && <p className="alert alert-warn" style={{ textAlign: 'left' }}>Paiement interrompu. Vous pouvez réessayer quand vous le souhaitez.</p>}
                   {lastFailed && !sp.cancelled && <p className="alert alert-error" style={{ textAlign: 'left' }}>Le dernier paiement a été refusé{o.transactions[0].failure_reason ? ` (${o.transactions[0].failure_reason})` : ''}. Vous pouvez réessayer.</p>}
-                  {provider === 'demo' && <p className="alert alert-warn" style={{ textAlign: 'left' }}><Info size={18} aria-hidden /> <span><strong>Mode démonstration</strong> : le paiement par carte (Stripe) n&apos;est pas encore activé. Le paiement sera simulé, sans aucun encaissement.</span></p>}
+                  {provider === 'demo' && <p className="alert alert-warn" style={{ textAlign: 'left' }}><Info size={18} aria-hidden /> <span><strong>Mode démonstration</strong> : le paiement en ligne n&apos;est pas encore activé. Le paiement sera simulé, sans aucun encaissement.</span></p>}
+                  {provider === 'saspay' && o.total_amount !== null && (() => {
+                    const c = chargeFor('saspay', o.total_amount, o.currency);
+                    return c.converted ? (
+                      <p className="alert alert-info" style={{ textAlign: 'left' }}><Info size={18} aria-hidden /> <span>Paiement sécurisé par <strong>SasPay</strong>. Montant débité : <strong>{c.amount.toLocaleString('fr-FR')} F CFA (XOF)</strong>, soit {formatMoney(o.total_amount, o.currency, s.commerce.locale)} au taux fixe officiel 1 € = {EUR_XOF.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} F CFA. Votre banque peut appliquer des frais de change.</span></p>
+                    ) : null;
+                  })()}
                   {provider === 'none'
                     ? <p className="alert alert-error" style={{ textAlign: 'left' }}>Le paiement en ligne n&apos;est pas encore disponible. Contactez-nous{s.company.phone ? ` au ${s.company.phone}` : ''} pour finaliser votre commande.</p>
                     : <PayButton orderNumber={o.order_number} token={o.access_token} label={lastFailed || sp.cancelled ? 'Réessayer le paiement' : `Payer ${formatMoney(o.total_amount ?? 0, o.currency, s.commerce.locale)}`} />}

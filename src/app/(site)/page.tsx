@@ -69,7 +69,7 @@ export default async function HomePage() {
       <section className="trust" aria-label="Nos engagements">
         <div className="container">
           {[
-            { I: ShieldCheck, t: 'Paiement 100 % sécurisé', d: provider === 'stripe' ? '(carte bancaire · Stripe)' : '(carte bancaire)' },
+            { I: ShieldCheck, t: 'Paiement 100 % sécurisé', d: provider === 'saspay' ? '(via SasPay)' : provider === 'stripe' ? '(carte bancaire · Stripe)' : '(carte bancaire)' },
             { I: Truck, t: 'Livraison rapide', d: 'partout en France' },
             { I: Headset, t: 'Service client', d: 'réactif et à votre écoute' },
             { I: Gem, t: 'Bois de qualité', d: 'sélectionné et séché' },

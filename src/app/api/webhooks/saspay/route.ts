@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     if (!trx.txRef) return NextResponse.json({ ok: true, ignored: 'not_boischauff' });
     const [tx] = await db()<{ public_id: string }[]>`select public_id from payment_transactions where public_id = ${trx.txRef} and provider = 'saspay'`;
     if (!tx) return NextResponse.json({ ok: true, ignored: 'unknown_transaction' });
-    const r = await settleTransaction(tx.public_id, { status: 'succeeded', amountCents: trx.amountCents, currency: trx.currency ?? null, method: 'SasPay (Mobile Money)', isDemo: false, raw: trx.raw });
+    const r = await settleTransaction(tx.public_id, { status: 'succeeded', amountCents: trx.amountCents, currency: trx.currency ?? null, method: 'SasPay', isDemo: false, raw: trx.raw });
     await db()`update webhook_events set processed_at = now() where provider = 'saspay' and event_id = ${eventId}`;
     return NextResponse.json({ ok: true, outcome: r.outcome });
   } catch (e) {

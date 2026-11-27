@@ -51,8 +51,8 @@ export function Footer({ s, paymentMode }: { s: AllSettings; paymentMode: string
         </div>
         <div>
           <div className="pay-card">
-            <div className="top"><ShieldCheck size={34} aria-hidden /><span>Paiement sécurisé<br /><small style={{ fontWeight: 600, opacity: .85 }}>{paymentMode === 'stripe' ? 'par carte bancaire avec Stripe' : 'transactions chiffrées'}</small></span></div>
-            <div className="methods" aria-label="Moyens de paiement acceptés"><span>CB</span><span>VISA</span><span>Mastercard</span><span>Apple Pay</span><span>Google Pay</span></div>
+            <div className="top"><ShieldCheck size={34} aria-hidden /><span>Paiement sécurisé<br /><small style={{ fontWeight: 600, opacity: .85 }}>{paymentMode === 'saspay' ? 'avec SasPay' : paymentMode === 'stripe' ? 'par carte bancaire avec Stripe' : 'transactions chiffrées'}</small></span></div>
+            <div className="methods" aria-label="Moyens de paiement acceptés">{paymentMode === 'saspay' ? <><span>SasPay</span><span>Paiement en ligne sécurisé</span></> : <><span>CB</span><span>VISA</span><span>Mastercard</span><span>Apple Pay</span><span>Google Pay</span></>}</div>
           </div>
           {c.opening_hours && <p style={{ marginTop: 14, fontSize: '.9rem' }}>{c.opening_hours}</p>}
         </div>

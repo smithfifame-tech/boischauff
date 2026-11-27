@@ -5,6 +5,15 @@ Site e-commerce complet : catalogue, calculateur de devis (kg / tonnes, tarifs d
 - **En ligne** : https://boischauff.vercel.app
 - **Administration** : https://boischauff.vercel.app/admin
 
+## Paiement SasPay (actif par défaut si les clés sont présentes)
+
+Les commandes sont en euros ; SasPay n'acceptant pas l'euro, le montant est encaissé en **francs CFA (XOF)**
+au taux fixe officiel **1 € = 655,957 F CFA**. Le client voit le montant converti avant de payer, et le serveur
+vérifie que SasPay a bien encaissé exactement ce montant en XOF avant de marquer la commande payée.
+
+Variables Vercel : `SASPAY_SECRET_KEY` (sk_live_…), `SASPAY_WEBHOOK_SECRET`, `SASPAY_ENVIRONMENT=live`.
+Webhook à déclarer dans SasPay (événement `transaction.success`) : `https://VOTRE-DOMAINE/api/webhooks/saspay`.
+
 ## Paiement par carte — Stripe (recommandé pour la France et l'Europe)
 
 1. Créez un compte sur https://dashboard.stripe.com et récupérez la **clé secrète** (`sk_test_…` puis `sk_live_…`).

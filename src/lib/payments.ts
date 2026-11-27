@@ -203,6 +203,14 @@ export function countryFromPhone(phone: string): string {
   const m = /^\+?(\d{3})/.exec(phone.replace(/[\s().-]/g, ''));
   return (m && phone.trim().startsWith('+') && DIAL_CODES[m[1]]) || 'BJ';
 }
+/** Numéros français saisis sans indicatif (06 12 34 56 78) → +33 6 12 34 56 78. */
+export function intlPhone(phone: string): string {
+  const p = phone.replace(/[\s().-]/g, '');
+  if (p.startsWith('+')) return p;
+  if (p.startsWith('00')) return `+${p.slice(2)}`;
+  if (/^0[6-7]\d{8}$/.test(p)) return `+33${p.slice(1)}`;
+  return p;
+}
 /** Numéros béninois : format à 10 chiffres « 01 » + 8 chiffres depuis le 30/11/2024. */
 export function normalizePhone(phone: string): string {
   const p = phone.replace(/[\s().-]/g, '');
@@ -217,21 +225,31 @@ export function extractTxRef(text: unknown): string | undefined {
   return typeof text === 'string' ? REF_RE.exec(text)?.[1] : undefined;
 }
 
-async function saspayCreate(order: FullOrder, txPublicId: string) {
-  if (!SASPAY_CURRENCIES.includes(order.currency.toUpperCase())) {
-    throw new HttpError(422, `La devise ${order.currency} n'est pas acceptée par SasPay. Configurez le site en FCFA (XOF) dans l'administration.`);
+/** Parité fixe officielle du franc CFA (UEMOA) : 1 € = 655,957 F CFA, inchangée depuis 1999. */
+export const EUR_XOF = 655.957;
+
+/** Montant et devise réellement demandés à la passerelle pour une commande. */
+export function chargeFor(provider: ProviderName, total: number, currency: string): { amount: number; currency: string; converted: boolean } {
+  const cur = currency.toUpperCase();
+  if (provider === 'saspay' && !SASPAY_CURRENCIES.includes(cur)) {
+    if (cur === 'EUR') return { amount: Math.round(total * EUR_XOF), currency: 'XOF', converted: true };
+    throw new HttpError(422, `La devise ${currency} n'est pas acceptée par SasPay.`);
   }
+  return { amount: total, currency: cur, converted: false };
+}
+
+async function saspayCreate(order: FullOrder, txPublicId: string, charge: { amount: number; currency: string }) {
   const base = siteUrl();
   const ref = ` · Réf. BC:${txPublicId}`;
   const description = `Commande ${order.order_number} — bois de chauffage`;
   const session = await saspayCall<{ id: string; checkout_url: string }>('POST', '/checkout-sessions/', {
-    amount: toDecimalString(order.total_amount ?? 0),
-    currency: order.currency.toUpperCase(),
-    country: countryFromPhone(order.customer_phone),
+    amount: toDecimalString(charge.amount),
+    currency: charge.currency,
+    country: countryFromPhone(intlPhone(order.customer_phone)),
     description: `${description.slice(0, 250 - ref.length)}${ref}`,
     customer_email: order.customer_email,
     customer_name: `${order.customer_first_name} ${order.customer_last_name}`.trim().slice(0, 120),
-    customer_phone: normalizePhone(order.customer_phone),
+    customer_phone: normalizePhone(intlPhone(order.customer_phone)),
     return_url: `${base}/paiement/retour?order=${encodeURIComponent(order.order_number)}&t=${encodeURIComponent(order.access_token)}`,
     metadata: { tx: txPublicId, order_number: order.order_number, source: 'boischauff' },
     expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
@@ -303,10 +321,11 @@ export async function initPayment(orderNumber: string, accessToken: string): Pro
     return { redirectUrl: recent.checkout_url, provider, reused: true };
   }
 
+  const charge = chargeFor(provider, order.total_amount, order.currency);
   const publicId = newTxPublicId();
   await db()`
-    insert into payment_transactions (public_id, order_id, provider, status, amount, currency)
-    values (${publicId}, ${order.id}, ${provider}, 'created', ${order.total_amount}, ${order.currency})`;
+    insert into payment_transactions (public_id, order_id, provider, status, amount, currency, charge_amount, charge_currency)
+    values (${publicId}, ${order.id}, ${provider}, 'created', ${order.total_amount}, ${order.currency}, ${charge.amount}, ${charge.currency})`;
 
   try {
     let providerTxId: string;
@@ -316,7 +335,7 @@ export async function initPayment(orderNumber: string, accessToken: string): Pro
       providerTxId = r.providerTxId;
       checkoutUrl = r.checkoutUrl;
     } else if (provider === 'saspay') {
-      const r = await saspayCreate(order, publicId);
+      const r = await saspayCreate(order, publicId, charge);
       providerTxId = r.providerTxId;
       checkoutUrl = r.checkoutUrl;
     } else {
@@ -378,8 +397,11 @@ export async function settleTransaction(publicId: string, verified: {
       return { orderId, outcome: 'already_paid' as const };
     }
     const expected = toCents(num(order.total_amount));
-    const amountOk = verified.amountCents === undefined || verified.amountCents === null || verified.amountCents === expected;
-    const currencyOk = !verified.currency || verified.currency.toUpperCase() === String(order.currency).toUpperCase();
+    // La passerelle est comparée au montant qui lui a été demandé (ex. XOF converti), la transaction à la commande.
+    const chargeCents = tx.charge_amount === null || tx.charge_amount === undefined ? expected : toCents(num(tx.charge_amount));
+    const chargeCurrency = String(tx.charge_currency ?? order.currency).toUpperCase();
+    const amountOk = verified.amountCents === undefined || verified.amountCents === null || verified.amountCents === chargeCents;
+    const currencyOk = !verified.currency || verified.currency.toUpperCase() === chargeCurrency;
     if (!amountOk || !currencyOk || expected !== toCents(num(tx.amount))) {
       await sql`update payment_transactions set status = 'failed', failure_reason = 'Montant ou devise non conforme',
                 raw_last_event = coalesce(${raw}, raw_last_event), updated_at = now() where id = ${tx.id as number}`;
@@ -392,7 +414,8 @@ export async function settleTransaction(publicId: string, verified: {
     await sql`
       insert into payments (order_id, provider, status, amount, currency, transaction_ref, method, is_demo, paid_at)
       values (${orderId}, ${tx.provider as string}, 'paid', ${order.total_amount as string}, ${order.currency as string},
-              ${(tx.provider_tx_id as string) || publicId}, ${verified.method || ''}, ${verified.isDemo}, now())
+              ${(tx.provider_tx_id as string) || publicId},
+              ${`${verified.method || ''}${tx.charge_currency && String(tx.charge_currency) !== String(order.currency) ? ` — ${num(tx.charge_amount).toLocaleString('fr-FR')} ${String(tx.charge_currency)}` : ''}`}, ${verified.isDemo}, now())
       on conflict (order_id) do update set provider = excluded.provider, status = 'paid', amount = excluded.amount,
         currency = excluded.currency, transaction_ref = excluded.transaction_ref, method = excluded.method,
         is_demo = excluded.is_demo, paid_at = now(), updated_at = now()`;
