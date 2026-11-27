@@ -29,6 +29,8 @@ function createClient() {
     // Requêtes préparées seulement hors pooler en mode transaction
     prepare: process.env.DATABASE_PREPARE ? process.env.DATABASE_PREPARE === 'true' : !transactionPooler,
     max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 5)),
+    // Une requête à la fois par connexion : le pooler en mode transaction ne garantit pas l'ordre des réponses en rafale.
+    max_pipeline: transactionPooler || process.env.DATABASE_PREPARE === 'false' ? 1 : 100,
     idle_timeout: 20,
     connect_timeout: 15,
     ssl: isLocal || process.env.DATABASE_SSL === 'disable' ? false : 'require',
@@ -36,6 +38,7 @@ function createClient() {
     connection: { search_path: process.env.DATABASE_SCHEMA || 'boischauff' },
     onnotice: () => {},
   };
+  // max_pipeline existe dans postgres.js mais n'est pas déclaré dans ses types.
   return postgres(finalUrl, options as unknown as Parameters<typeof postgres>[1]);
 }
 
