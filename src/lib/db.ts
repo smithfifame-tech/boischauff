@@ -12,14 +12,13 @@ function createClient() {
     throw new Error('DATABASE_URL manquant : configurez la base de données (voir .env.example).');
   }
   const isLocal = /@(localhost|127\.0\.0\.1)|host=\/|%2Ftmp/.test(url);
-  // Pooler Supabase : le mode transaction (port 6543) bloque les requêtes paramétrées de postgres.js
-  // (Describe + Flush sans Sync). On utilise le mode session (port 5432) du même pooler, sauf si
-  // DATABASE_POOL_MODE=transaction est explicitement demandé.
+  // Pooler Supabase : mode transaction (port 6543) par défaut, adapté au serverless.
+  // DATABASE_POOL_MODE=session bascule sur le port 5432 (à réserver à un serveur permanent).
   let finalUrl = url;
   let session = false;
   try {
     const u = new URL(url);
-    if (u.hostname.endsWith('pooler.supabase.com') && u.port === '6543' && process.env.DATABASE_POOL_MODE !== 'transaction') {
+    if (u.hostname.endsWith('pooler.supabase.com') && u.port === '6543' && process.env.DATABASE_POOL_MODE === 'session') {
       u.port = '5432';
       finalUrl = u.toString();
       session = true;
@@ -29,10 +28,9 @@ function createClient() {
   const options = {
     // Requêtes préparées seulement hors pooler en mode transaction
     prepare: !transactionPooler,
-    // Mode session : 15 clients maximum pour tout le projet Supabase → 1 connexion par instance.
-    max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 5)),
+    max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 3)),
     max_pipeline: transactionPooler ? 1 : 100,
-    idle_timeout: session ? 5 : 20,
+    idle_timeout: 10,
     connect_timeout: 15,
     ssl: isLocal || process.env.DATABASE_SSL === 'disable' ? false : 'require',
     // Toutes les tables vivent dans le schéma "boischauff"
