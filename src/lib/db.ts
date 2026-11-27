@@ -28,16 +28,14 @@ function createClient() {
   const options = {
     // Requêtes préparées seulement hors pooler en mode transaction
     prepare: !transactionPooler,
-    max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 3)),
-    max_pipeline: transactionPooler ? 1 : 100,
-    idle_timeout: 10,
+    max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 5)),
+    idle_timeout: 20,
     connect_timeout: 15,
     ssl: isLocal || process.env.DATABASE_SSL === 'disable' ? false : 'require',
     // Toutes les tables vivent dans le schéma "boischauff"
     connection: { search_path: process.env.DATABASE_SCHEMA || 'boischauff' },
     onnotice: () => {},
   };
-  // max_pipeline existe dans postgres.js mais n'est pas déclaré dans ses types.
   return postgres(finalUrl, options as unknown as Parameters<typeof postgres>[1]);
 }
 
