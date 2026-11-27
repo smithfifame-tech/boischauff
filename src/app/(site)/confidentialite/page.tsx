@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Politique de confidentialité', alte
 export default async function PrivacyPage() {
   const s = await getSettings();
   return (
-    <LegalPage image={PHOTOS.birch} title="Politique de confidentialité">
+    <LegalPage image={PHOTOS.birch} title="Politique de confidentialité" intro="Conforme au Règlement général sur la protection des données (RGPD) et à la loi Informatique et Libertés.">
       <h2>Responsable du traitement</h2>
       <p>{s.company.name} — contact : {s.company.email || <ToComplete>e-mail</ToComplete>}.</p>
       <h2>Données collectées</h2>
@@ -27,7 +27,7 @@ export default async function PrivacyPage() {
       <h2>Cookies</h2>
       <p>Le site n&apos;utilise que des cookies strictement nécessaires : session client ou administrateur, jeton de sécurité anti-CSRF et panier. Aucun cookie publicitaire.</p>
       <h2>Vos droits</h2>
-      <p>Vous pouvez demander l&apos;accès, la rectification ou la suppression de vos données en écrivant à {s.company.email || 'notre adresse de contact'}.</p>
+      <p>Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification, d&apos;effacement, de limitation, d&apos;opposition et de portabilité de vos données, en écrivant à {s.company.email || 'notre adresse de contact'}. Vous pouvez également introduire une réclamation auprès de la CNIL (www.cnil.fr).</p>
     </LegalPage>
   );
 }

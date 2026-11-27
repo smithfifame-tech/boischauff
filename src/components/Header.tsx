@@ -1,4 +1,5 @@
 'use client';
+import { telHref } from '@/lib/phone';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,7 +24,7 @@ export function Header({ name, tagline, logoUrl, loggedIn }: { name: string; tag
   useEffect(() => { setOpen(false); }, [path]);
   useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
   const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
-  const phoneHref = company.phone ? `tel:${company.phone.replace(/[^+\d]/g, '')}` : undefined;
+  const phoneHref = company.phone ? telHref(company.phone) : undefined;
 
   return (
     <>

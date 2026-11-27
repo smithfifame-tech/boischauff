@@ -69,7 +69,7 @@ export function SettingsForm({ initial }: { initial: AllSettings }) {
         <div className="form-grid">
           {field('E-mail de réception des commandes', s.notifications.order_email, (v) => setS((p) => ({ ...p, notifications: { order_email: v } })), { full: true, type: 'email' })}
           <div className="field full"><label className="label">Message de pied de reçu</label><textarea className="textarea" style={{ minHeight: 70 }} value={s.receipt.footer} onChange={(e) => setS((p) => ({ ...p, receipt: { ...p.receipt, footer: e.target.value } }))} /></div>
-          <div className="field full"><label className="label">Mentions légales du reçu (RCCM, IFU…)</label><textarea className="textarea" style={{ minHeight: 70 }} value={s.receipt.legal_mentions} onChange={(e) => setS((p) => ({ ...p, receipt: { ...p.receipt, legal_mentions: e.target.value } }))} /></div>
+          <div className="field full"><label className="label">Mentions légales du reçu (SIRET, RCS, n° TVA intracommunautaire…)</label><textarea className="textarea" style={{ minHeight: 70 }} value={s.receipt.legal_mentions} onChange={(e) => setS((p) => ({ ...p, receipt: { ...p.receipt, legal_mentions: e.target.value } }))} /></div>
         </div>
       </div>
       {msg && <p className={`alert ${msg.ok ? 'alert-success' : 'alert-error'}`} role="status" style={{ marginBottom: 12 }}>{msg.t}</p>}
