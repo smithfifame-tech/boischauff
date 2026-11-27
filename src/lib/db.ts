@@ -12,17 +12,21 @@ function createClient() {
     throw new Error('DATABASE_URL manquant : configurez la base de données (voir .env.example).');
   }
   const isLocal = /@(localhost|127\.0\.0\.1)|host=\/|%2Ftmp/.test(url);
-  return postgres(url, {
+  const options = {
     // Compatible avec un pooler en mode transaction (Supabase Supavisor, PgBouncer…)
     prepare: false,
     max: Number(process.env.DATABASE_POOL_MAX || 5),
+    // Pas de pipelining : le pooler Supabase en mode transaction peut bloquer des requêtes envoyées en rafale sur une même connexion.
+    max_pipeline: 1,
     idle_timeout: 20,
     connect_timeout: 15,
     ssl: isLocal || process.env.DATABASE_SSL === 'disable' ? false : 'require',
     // Toutes les tables vivent dans le schéma "boischauff"
     connection: { search_path: process.env.DATABASE_SCHEMA || 'boischauff' },
     onnotice: () => {},
-  });
+  };
+  // max_pipeline existe dans postgres.js mais n'est pas déclaré dans ses types.
+  return postgres(url, options as unknown as Parameters<typeof postgres>[1]);
 }
 
 export function db() {
