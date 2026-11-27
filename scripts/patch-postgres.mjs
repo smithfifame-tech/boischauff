@@ -5,16 +5,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const FROM = 'q.describeFirst = q.onlyDescribe || (parameters.length && !q.prepared)';
-const TO = 'q.describeFirst = q.onlyDescribe || (parameters.length && !q.prepared && q.prepare)';
+// 2) Avec max_pipeline = 1, aucune requête n'est envoyée tant que la précédente n'est pas terminée
+//    (la version d'origine en laisse partir deux) : le pooler ne mélange plus les réponses.
+const PATCHES = [
+  ['q.describeFirst = q.onlyDescribe || (parameters.length && !q.prepared)', 'q.describeFirst = q.onlyDescribe || (parameters.length && !q.prepared && q.prepare)'],
+  [
+    '&& sent.length < max_pipeline\n        && (!q.options.onexecute || q.options.onexecute(connection))',
+    '&& (!q.options.onexecute || q.options.onexecute(connection))\n        && sent.length + 1 < max_pipeline',
+  ],
+];
 let patched = 0;
 for (const v of ['src', 'cjs/src', 'cf/src']) {
   const f = path.join('node_modules', 'postgres', v, 'connection.js');
   if (!fs.existsSync(f)) continue;
-  const s = fs.readFileSync(f, 'utf8');
-  if (s.includes(TO)) { patched++; continue; }
-  if (!s.includes(FROM)) { console.warn(`[patch-postgres] motif introuvable dans ${f}`); continue; }
-  fs.writeFileSync(f, s.replace(FROM, TO));
+  let s = fs.readFileSync(f, 'utf8');
+  for (const [from, to] of PATCHES) {
+    if (s.includes(to)) continue;
+    if (!s.includes(from)) { console.warn(`[patch-postgres] motif introuvable dans ${f} : ${from}`); continue; }
+    s = s.replace(from, to);
+  }
+  fs.writeFileSync(f, s);
   patched++;
 }
 console.log(`[patch-postgres] ${patched} fichier(s) prêt(s)`);
