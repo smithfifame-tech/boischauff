@@ -27,7 +27,7 @@ function createClient() {
   const transactionPooler = !session && /:6543\b|pgbouncer=true/.test(url);
   const options = {
     // Requêtes préparées seulement hors pooler en mode transaction
-    prepare: !transactionPooler,
+    prepare: process.env.DATABASE_PREPARE ? process.env.DATABASE_PREPARE === 'true' : !transactionPooler,
     max: Number(process.env.DATABASE_POOL_MAX || (session ? 1 : 5)),
     idle_timeout: 20,
     connect_timeout: 15,
