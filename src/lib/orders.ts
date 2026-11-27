@@ -124,7 +124,7 @@ export async function createOrder(input: CheckoutInput, userId: number | null): 
     const accessToken = randomToken(24);
     const status: OrderStatus = quote.delivery.requiresQuote ? 'awaiting_quote' : 'pending_payment';
     const isDemo = quote.lines.length > 0 && (await sql<{ c: number }[]>`
-      select count(*)::int as c from products where id = any(${quote.lines.map((l) => l.productId)}) and is_demo_price`)[0].c > 0
+      select count(*)::int as c from products where id in ${sql(quote.lines.map((l) => l.productId))} and is_demo_price`)[0].c > 0
       || Boolean(zone?.is_demo);
 
     const [order] = await sql<{ id: number }[]>`

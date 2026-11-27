@@ -85,8 +85,8 @@ export async function getProducts(opts: { includeInactive?: boolean } = {}, sql:
   if (products.length === 0) return [];
   const ids = products.map((p) => Number(p.id));
   const [rules, images] = await Promise.all([
-    sql<Row[]>`select * from price_rules where product_id = any(${ids}) order by rule_type, min_qty_kg nulls last, pack_qty_kg nulls last`,
-    sql<Row[]>`select * from product_images where product_id = any(${ids}) order by sort_order, id`,
+    sql<Row[]>`select * from price_rules where product_id in ${sql(ids)} order by rule_type, min_qty_kg nulls last, pack_qty_kg nulls last`,
+    sql<Row[]>`select * from product_images where product_id in ${sql(ids)} order by sort_order, id`,
   ]);
   return products.map((p) => mapProduct(p, rules, images));
 }
