@@ -1,5 +1,8 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowRight, BadgeCheck, Calculator, CheckCircle2, CreditCard, Flame, Handshake, Headset, Leaf, PackageCheck, ShieldCheck, Truck } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Calculator, CheckCircle2, CreditCard, Flame, Gem, Headset, Home as HomeIcon, Leaf, PackageCheck, Play, ShieldCheck, Truck } from 'lucide-react';
+import { ReviewCarousel } from '@/components/ReviewCarousel';
+import { Sparkles } from '@/components/Sparkles';
+import { getApprovedReviews, getProductRatings } from '@/lib/reviews';
 import { QuoteCalculator } from '@/components/QuoteCalculator';
 import { ProductCard } from '@/components/ProductCard';
 import { Embers } from '@/components/Embers';
@@ -15,11 +18,13 @@ function Words({ text, offset = 0 }: { text: string; offset?: number }) {
 }
 
 export default async function HomePage() {
-  const [s, products, zones] = await Promise.all([getSettings(), getProducts(), getZones()]);
+  const [s, products, zones, reviews, ratings] = await Promise.all([getSettings(), getProducts(), getZones(), getApprovedReviews(8), getProductRatings()]);
   const { currency, locale, min_order_amount } = s.commerce;
   const featured = (products.filter((p) => p.is_featured).length >= 4 ? products.filter((p) => p.is_featured) : products).slice(0, 4);
   const showDemo = s.commerce.show_demo_notice;
   const provider = activeProvider();
+  const bm = /^(Goden)(Wood.*)$/.exec(s.company.name);
+  const brandA = bm?.[1]; const brandB = bm?.[2];
   const maxTier = Math.round(Math.max(0, ...products.flatMap((p) => p.rules.filter((r) => r.rule_type === 'tier' && r.price_per_kg && p.base_price_per_kg > 0).map((r) => (1 - (r.price_per_kg as number) / p.base_price_per_kg) * 100))));
 
   const jsonLd = {
@@ -39,18 +44,21 @@ export default async function HomePage() {
       <section className="hero">
         <div className="hero-bg">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={img(PHOTOS.hero, 1600, 900, 70)} srcSet={srcSet(PHOTOS.hero, [800, 1200, 1600, 2200], 16 / 9)} sizes="100vw"
-            alt="Bois de chauffage empilé prêt à être livré" fetchPriority="high" width={1600} height={900} />
+          <img src={img(PHOTOS.livingFire, 1600, 900, 70)} srcSet={srcSet(PHOTOS.livingFire, [800, 1200, 1600, 2200], 16 / 9)} sizes="100vw"
+            alt="Poêle à bois allumé dans un salon chaleureux" fetchPriority="high" width={1600} height={900} />
         </div>
-        <Embers count={30} />
+        <Embers count={34} />
+        <Sparkles count={22} />
         <div className="container">
           <div>
-            <span className="chip fade-up"><Leaf size={16} aria-hidden /> Bois de chauffage livré en France</span>
-            <h1 className="hero-title"><Words text="Votre bois de chauffage" /><span className="accent shimmer w" style={{ ['--i' as string]: 4 }}>au meilleur prix !</span></h1>
-            <p className="hero-sub fade-up d2">Commandez en ligne, payez par carte en toute sécurité et recevez votre bois sec directement chez vous, partout en France et en Europe.</p>
+            <span className="chip fade-up"><Flame size={17} aria-hidden /> Bois de chauffage premium</span>
+            <div className="hero-brand fade-up d1" aria-hidden>{brandA ? <><span className="g">{brandA}</span>{brandB}</> : s.company.name}</div>
+            <h1 className="hero-title"><Words text="Votre bois de chauffage" /><br /><span className="accent"><Words text="au meilleur prix !" offset={4} />
+              <svg className="swoosh" viewBox="0 0 120 34" aria-hidden><path d="M4 26 C 40 6, 80 4, 116 10" /><path d="M14 31 C 46 18, 78 15, 104 18" style={{ strokeWidth: 4, animationDelay: '1.4s' }} /></svg></span></h1>
+            <p className="hero-sub fade-up d2">Qualité supérieure<span className="dot">•</span>Livraison rapide<span className="dot">•</span>Paiement sécurisé</p>
             <div className="hero-actions fade-up d3">
-              <Link href="/devis" className="btn btn-primary btn-lg btn-pulse">Commander maintenant <ArrowRight size={19} aria-hidden /></Link>
-              <Link href="/boutique" className="btn btn-outline-light btn-lg">Découvrir nos bois <ArrowDown size={19} aria-hidden /></Link>
+              <Link href="/devis" className="btn btn-primary btn-lg btn-pulse">Commander dès maintenant <ArrowRight size={19} aria-hidden /></Link>
+              <Link href="/a-propos" className="btn btn-outline-light btn-lg"><span className="btn-play"><Play size={13} fill="currentColor" aria-hidden /></span> Découvrir notre service</Link>
             </div>
           </div>
           <div><QuoteCalculator /></div>
@@ -58,49 +66,50 @@ export default async function HomePage() {
         <span className="scroll-cue" aria-hidden />
       </section>
 
-      <Marquee />
-
       <section className="trust" aria-label="Nos engagements">
         <div className="container">
           {[
-            { I: ShieldCheck, t: 'Paiement sécurisé', d: provider === 'stripe' ? 'Carte bancaire · Stripe' : 'Carte bancaire' },
-            { I: Truck, t: 'Livraison rapide', d: 'France & Europe' },
-            { I: Headset, t: 'Service client', d: 'À votre écoute' },
-            { I: BadgeCheck, t: 'Qualité garantie', d: 'Bois sélectionné & séché' },
-            { I: Handshake, t: 'Satisfaction client', d: 'Accompagnement personnalisé' },
+            { I: ShieldCheck, t: 'Paiement 100 % sécurisé', d: provider === 'stripe' ? '(carte bancaire · Stripe)' : '(carte bancaire)' },
+            { I: Truck, t: 'Livraison rapide', d: 'partout en France' },
+            { I: Headset, t: 'Service client', d: 'réactif et à votre écoute' },
+            { I: Gem, t: 'Bois de qualité', d: 'sélectionné et séché' },
+            { I: Leaf, t: 'Chauffage naturel', d: 'énergie renouvelable' },
           ].map(({ I, t, d }, n) => (
-            <div className="trust-item" key={t} data-reveal="up" style={{ ['--d' as string]: `${n * 0.08}s` }}><I size={34} aria-hidden /><span>{t}<small>{d}</small></span></div>
+            <div className="trust-item" key={t} data-reveal="up" style={{ ['--d' as string]: `${n * 0.08}s` }}><I size={38} aria-hidden /><span>{t}<small>{d}</small></span></div>
           ))}
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
-          <div className="section-title" data-reveal="blur"><span className="eyebrow">La boutique</span><h2>Nos bois de chauffage</h2><p>Des essences sélectionnées, séchées et prêtes à brûler. Choisissez la quantité exacte qu&apos;il vous faut, du sac de 25 kg à plusieurs tonnes.</p></div>
-          <div className="products-layout">
+      <section className="range">
+        <Sparkles count={14} />
+        <div className="container" style={{ position: 'relative' }}>
+          <div className="range-head">
+            <div className="section-title" data-reveal="blur"><span className="eyebrow">Notre gamme</span><h2>Nos bois de chauffage</h2><span className="script-sub">Le choix parfait pour un hiver au chaud</span></div>
+            <Link href="/boutique" className="btn btn-outline-gold" data-reveal="left">Voir toute la boutique <ArrowRight size={17} aria-hidden /></Link>
+          </div>
+          <div className="range-grid">
+            <aside className="why-card" data-reveal="left">
+              <h3><HomeIcon size={34} aria-hidden /> Un chauffage naturel et économique</h3>
+              <ul>
+                <li><CheckCircle2 size={18} aria-hidden /> Bois sec et de qualité</li>
+                <li><CheckCircle2 size={18} aria-hidden /> Livraison rapide</li>
+                <li><CheckCircle2 size={18} aria-hidden /> Prix transparents</li>
+                <li><CheckCircle2 size={18} aria-hidden /> Tarifs dégressifs</li>
+              </ul>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img(PHOTOS.logs, 400, 220)} alt="" loading="lazy" className="float-slow" />
+            </aside>
             {featured.map((p, n) => (
               <div key={p.id} data-reveal="flip" style={{ ['--d' as string]: `${n * 0.1}s`, display: 'grid' }}>
-                <ProductCard p={p} currency={currency} locale={locale} showDemo={showDemo} />
+                <ProductCard p={p} currency={currency} locale={locale} showDemo={showDemo} rating={ratings[p.id]} />
               </div>
             ))}
-            <aside className="promo-card" data-reveal="right">
-              <div>
-                <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>À partir de</div>
-                <div className="big">{formatMoney(min_order_amount, currency, locale).replace(/,00/, '')}</div>
-                <div style={{ fontWeight: 800, fontSize: '1.1rem', marginTop: 6 }}>et jusqu&apos;à</div>
-                <div style={{ color: 'var(--gold)', fontWeight: 900, fontSize: '1.5rem', fontFamily: 'var(--font-title)' }}>{formatMoney(1000, currency, locale).replace(/,00/, '')} et plus !</div>
-                <div className="script">Commandez selon vos besoins !</div>
-              </div>
-              <Link href="/devis" className="btn btn-primary" style={{ marginTop: 18 }}>Calculer mon devis</Link>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img(PHOTOS.stack, 400, 300)} alt="" loading="lazy" aria-hidden className="float-slow" />
-            </aside>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 30 }} data-reveal="up">
-            <Link href="/boutique" className="btn btn-green">Voir toute la boutique <ArrowRight size={18} aria-hidden /></Link>
+            <ReviewCarousel reviews={reviews.map((r) => ({ id: r.id, author: r.author, city: r.city, rating: r.rating, comment: r.comment }))} />
           </div>
         </div>
       </section>
+
+      <Marquee />
 
       <section className="parallax" style={{ backgroundImage: `url(${img(PHOTOS.livingFire, 1800, 1000, 65)})` }}>
         <div className="container" data-reveal="zoom">

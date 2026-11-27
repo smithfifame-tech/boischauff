@@ -20,7 +20,7 @@ export function mailTransportName(): 'smtp' | 'resend' | 'none' {
 }
 
 function fromAddress() {
-  return process.env.MAIL_FROM || process.env.SMTP_USER || 'BoisChauff+ <no-reply@example.com>';
+  return process.env.MAIL_FROM || process.env.SMTP_USER || 'GodenWood <no-reply@example.com>';
 }
 
 async function deliver(m: MailInput): Promise<string> {

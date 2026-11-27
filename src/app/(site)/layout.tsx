@@ -21,12 +21,14 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         minOrderAmount: s.commerce.min_order_amount, guestCheckout: s.commerce.guest_checkout, showDemoNotice: s.commerce.show_demo_notice }}
       company={{ name: s.company.name, phone: s.company.phone, email: s.company.email, deliveryArea: s.company.delivery_area }}
     >
+      <div className="gw">
       <a href="#contenu" className="skip-link">Aller au contenu</a>
       <DemoNotice demoPrices={demoPrices} paymentMode={paymentMode} />
       <Header name={s.company.name} tagline={s.company.tagline} logoUrl={s.company.logo_url} loggedIn={Boolean(user)} />
       <main id="contenu">{children}</main>
       <Footer s={s} paymentMode={paymentMode} />
       <ScrollFX />
+      </div>
     </SiteProvider>
   );
 }

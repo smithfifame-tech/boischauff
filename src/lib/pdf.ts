@@ -3,7 +3,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 import type { FullOrder } from './orders';
 import type { AllSettings } from './settings';
 import { formatMoney, formatQty } from './pricing';
-import { LOGO_COLORS, LOGO_LOG_ENDS, LOGO_PATHS } from './logo';
+import { LOGO_COLORS, LOGO_PATHS } from './logo';
 
 /** Les polices standard PDF (WinAnsi) n'acceptent pas certains caractères Unicode. */
 function safe(s: string): string {
@@ -16,19 +16,20 @@ function safe(s: string): string {
 
 function hex(c: string) {
   const m = /^#?([0-9a-f]{6})$/i.exec(c.trim());
-  const v = m ? m[1] : '073B19';
+  const v = m ? m[1] : '1E140C';
   return rgb(parseInt(v.slice(0, 2), 16) / 255, parseInt(v.slice(2, 4), 16) / 255, parseInt(v.slice(4, 6), 16) / 255);
 }
 
 function drawLogo(page: PDFPage, x: number, yTop: number, size: number) {
   const scale = size / 64;
-  page.drawSvgPath(LOGO_PATHS.logLeft, { x, y: yTop, scale, color: hex(LOGO_COLORS.log) });
-  page.drawSvgPath(LOGO_PATHS.logRight, { x, y: yTop, scale, color: hex(LOGO_COLORS.log) });
-  for (const e of LOGO_LOG_ENDS) {
-    page.drawCircle({ x: x + e.cx * scale, y: yTop - e.cy * scale, size: e.r * scale, color: hex(LOGO_COLORS.logEnd) });
-  }
-  page.drawSvgPath(LOGO_PATHS.flameOuter, { x, y: yTop, scale, color: hex(LOGO_COLORS.flame) });
-  page.drawSvgPath(LOGO_PATHS.flameInner, { x, y: yTop, scale, color: hex(LOGO_COLORS.flameInner) });
+  const d = (path: string, color: string) => page.drawSvgPath(path, { x, y: yTop, scale, color: hex(color) });
+  d(LOGO_PATHS.canopy, LOGO_COLORS.gold);
+  d(LOGO_PATHS.leaves, LOGO_COLORS.light);
+  d(LOGO_PATHS.trunk, LOGO_COLORS.deep);
+  d(LOGO_PATHS.roof, LOGO_COLORS.gold);
+  d(LOGO_PATHS.walls, LOGO_COLORS.gold);
+  d(LOGO_PATHS.window, LOGO_COLORS.deep);
+  d(LOGO_PATHS.ground, LOGO_COLORS.deep);
 }
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {

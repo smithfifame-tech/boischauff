@@ -20,7 +20,7 @@ export default async function CheckoutPage() {
       <PageHero image={PHOTOS.shed} title="Finaliser ma commande" intro="Vos informations de livraison, puis un devis détaillé vérifié par notre serveur avant le paiement." crumbs={[{ href: '/panier', label: 'Panier' }]} />
       <section className="section">
         <div className="container">
-          <CheckoutForm user={user ? { firstName: user.first_name, lastName: user.last_name, email: user.email, phone: user.phone } : null}
+          <CheckoutForm key={user?.id ?? 'invite'} user={user ? { firstName: user.first_name, lastName: user.last_name, email: user.email, phone: user.phone } : null}
             address={address ? { line1: address.line1, line2: address.line2, city: address.city, postalCode: address.postal_code, country: address.country } : null} />
         </div>
       </section>

@@ -104,7 +104,7 @@ const WINDOW_MIN = 15;
 const MAX_PER_ID = 5;
 const MAX_PER_IP = 25;
 
-export async function assertNotRateLimited(scope: 'user' | 'admin' | 'reset' | 'track', identifier: string, ip: string) {
+export async function assertNotRateLimited(scope: 'user' | 'admin' | 'reset' | 'track' | 'newsletter' | 'review', identifier: string, ip: string) {
   const [row] = await db()<{ by_id: number; by_ip: number }[]>`
     select
       count(*) filter (where identifier = ${identifier} and not success)::int as by_id,

@@ -26,6 +26,7 @@ export interface Product extends PricedProduct {
 export interface Zone extends DeliveryZone {
   description: string;
   lead_time: string;
+  postal_prefixes: string;
   is_active: boolean;
   is_demo: boolean;
   sort_order: number;
@@ -123,6 +124,7 @@ export function mapZone(z: Row): Zone {
     free_above: numOrNull(z.free_above),
     min_order_amount: numOrNull(z.min_order_amount),
     lead_time: String(z.lead_time ?? ''),
+    postal_prefixes: String(z.postal_prefixes ?? ''),
     is_active: Boolean(z.is_active),
     is_demo: Boolean(z.is_demo),
     sort_order: Number(z.sort_order ?? 0),
@@ -152,7 +154,7 @@ export function publicZone(z: Zone) {
   return {
     id: z.id, name: z.name, description: z.description, mode: z.mode, fixed_fee: z.fixed_fee,
     per_km_fee: z.per_km_fee, distance_km: z.distance_km, free_above: z.free_above,
-    min_order_amount: z.min_order_amount, lead_time: z.lead_time, is_demo: z.is_demo,
+    min_order_amount: z.min_order_amount, lead_time: z.lead_time, is_demo: z.is_demo, postal_prefixes: z.postal_prefixes,
   };
 }
 export type PublicZone = ReturnType<typeof publicZone>;

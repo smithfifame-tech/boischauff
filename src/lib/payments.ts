@@ -211,7 +211,7 @@ export function normalizePhone(phone: string): string {
   return p;
 }
 
-/** Référence BoisChauff+ insérée dans la description de la session (relue via la transaction). */
+/** Référence GodenWood insérée dans la description de la session (relue via la transaction). */
 const REF_RE = /BC:(TX[A-Z0-9]{6,40})/;
 export function extractTxRef(text: unknown): string | undefined {
   return typeof text === 'string' ? REF_RE.exec(text)?.[1] : undefined;

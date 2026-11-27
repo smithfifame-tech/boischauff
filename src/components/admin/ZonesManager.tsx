@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { api } from '@/lib/client';
 
-interface Z { id?: number; name: string; description: string; mode: 'free' | 'fixed' | 'distance' | 'quote'; fixed_fee: number; per_km_fee: number; distance_km: number; free_above: number | null; min_order_amount: number | null; lead_time: string; is_active: boolean; is_demo: boolean; sort_order: number }
-const NEW: Z = { name: '', description: '', mode: 'fixed', fixed_fee: 0, per_km_fee: 0, distance_km: 0, free_above: null, min_order_amount: null, lead_time: '', is_active: true, is_demo: false, sort_order: 10 };
+interface Z { id?: number; name: string; description: string; mode: 'free' | 'fixed' | 'distance' | 'quote'; fixed_fee: number; per_km_fee: number; distance_km: number; free_above: number | null; min_order_amount: number | null; lead_time: string; postal_prefixes: string; is_active: boolean; is_demo: boolean; sort_order: number }
+const NEW: Z = { name: '', description: '', mode: 'fixed', fixed_fee: 0, per_km_fee: 0, distance_km: 0, free_above: null, min_order_amount: null, lead_time: '', postal_prefixes: '', is_active: true, is_demo: false, sort_order: 10 };
 const n = (v: string) => Number(v.replace(',', '.')) || 0;
 const nn = (v: string) => (v.trim() === '' ? null : Number(v.replace(',', '.')));
 
@@ -37,6 +37,7 @@ function ZoneRow({ z, currency, onDone }: { z: Z; currency: string; onDone: () =
           <select className="select" value={f.mode} onChange={(e) => set('mode', e.target.value as Z['mode'])}>
             <option value="fixed">Tarif fixe</option><option value="distance">Selon la distance</option><option value="free">Gratuit</option><option value="quote">Sur devis</option></select></div>
         <div className="field"><label className="label">Délai indicatif</label><input className="input" value={f.lead_time} onChange={(e) => set('lead_time', e.target.value)} /></div>
+        <div className="field"><label className="label">Codes postaux <span className="opt">(début : 75 · 92,93,94 · FR = reste de la France · EU = hors France)</span></label><input className="input" value={f.postal_prefixes} placeholder="ex. 92,93,94" onChange={(e) => set('postal_prefixes', e.target.value)} /></div>
         <div className="field" style={{ gridColumn: '1 / -1' }}><label className="label">Description</label><input className="input" value={f.description} onChange={(e) => set('description', e.target.value)} /></div>
         {(f.mode === 'fixed' || f.mode === 'distance') && <div className="field"><label className="label">{f.mode === 'distance' ? 'Base' : 'Frais'} ({currency})</label><input className="input" inputMode="decimal" defaultValue={f.fixed_fee} onChange={(e) => set('fixed_fee', n(e.target.value))} /></div>}
         {f.mode === 'distance' && <>

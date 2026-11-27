@@ -40,11 +40,11 @@ export function AddToCart({ productId, compact = false, defaultQty }: { productI
       <div style={{ fontSize: '.88rem', minHeight: 22, color: q?.ok ? 'var(--green)' : 'var(--danger)', fontWeight: 700 }} aria-live="polite">
         {q?.ok ? `${formatQty(q.quantityKg)} = ${money(q.totalCents / 100)}${q.savingsCents > 0 ? ` (−${money(q.savingsCents / 100)})` : ''}` : q?.error}
       </div>
-      <button type="button" className={`btn btn-green${compact ? ' btn-sm' : ''}`} onClick={() => doAdd(false)} disabled={!q?.ok}>
-        {added ? <><Check size={17} aria-hidden /> Ajouté au panier</> : <><ShoppingCart size={17} aria-hidden /> Ajouter au panier</>}
+      <button type="button" className={`btn ${compact ? 'btn-primary' : 'btn-green'}${added ? ' just-added' : ''}`} onClick={() => doAdd(false)} disabled={!q?.ok}>
+        {added ? <><Check size={18} aria-hidden /> Ajouté au panier</> : <><ShoppingCart size={18} aria-hidden /> Ajouter au panier</>}
       </button>
-      <button type="button" className={`btn btn-primary${compact ? ' btn-sm' : ''}`} onClick={() => doAdd(true)} disabled={!q?.ok}>
-        <Zap size={17} aria-hidden /> Commander
+      <button type="button" className={compact ? 'product-link-more' : 'btn btn-primary'} onClick={() => doAdd(true)} disabled={!q?.ok}>
+        <Zap size={compact ? 14 : 16} aria-hidden /> Commander maintenant
       </button>
     </div>
   );

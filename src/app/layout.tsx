@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './motion.css';
+import './godenwood.css';
 import { getSettings, siteUrl } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';

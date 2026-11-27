@@ -1,25 +1,29 @@
-import { LOGO_COLORS, LOGO_LOG_ENDS, LOGO_PATHS } from '@/lib/logo';
+import { LOGO_COLORS, LOGO_PATHS } from '@/lib/logo';
 
 export function LogoMark({ size = 52, title }: { size?: number; title?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" role={title ? 'img' : 'presentation'} aria-label={title} aria-hidden={title ? undefined : true}>
-      <path d={LOGO_PATHS.logLeft} fill={LOGO_COLORS.log} />
-      <path d={LOGO_PATHS.logRight} fill={LOGO_COLORS.log} />
-      {LOGO_LOG_ENDS.map((e, i) => (
-        <g key={i}>
-          <circle cx={e.cx} cy={e.cy} r={e.r} fill={LOGO_COLORS.logEnd} />
-          <circle cx={e.cx} cy={e.cy} r={e.r * 0.5} fill="none" stroke={LOGO_COLORS.log} strokeWidth="0.8" opacity=".6" />
-        </g>
-      ))}
-      <path className="flame-outer" d={LOGO_PATHS.flameOuter} fill={LOGO_COLORS.flame} />
-      <path className="flame-inner" d={LOGO_PATHS.flameInner} fill={LOGO_COLORS.flameInner} />
+    <svg className="logo-mark" width={size} height={size} viewBox="0 0 64 64" role={title ? 'img' : 'presentation'} aria-label={title} aria-hidden={title ? undefined : true}>
+      <defs>
+        <linearGradient id="gwGold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={LOGO_COLORS.light} /><stop offset="1" stopColor={LOGO_COLORS.deep} />
+        </linearGradient>
+      </defs>
+      <g className="logo-tree">
+        <path d={LOGO_PATHS.canopy} fill="url(#gwGold)" />
+        <path d={LOGO_PATHS.leaves} fill={LOGO_COLORS.glow} opacity=".75" />
+      </g>
+      <path d={LOGO_PATHS.trunk} fill={LOGO_COLORS.deep} />
+      <path d={LOGO_PATHS.roof} fill="url(#gwGold)" />
+      <path d={LOGO_PATHS.walls} fill={LOGO_COLORS.gold} />
+      <path className="logo-window" d={LOGO_PATHS.window} fill={LOGO_COLORS.glow} />
+      <path d={LOGO_PATHS.ground} fill={LOGO_COLORS.deep} />
     </svg>
   );
 }
 
-/** Logo complet : flamme + nom. Le nom "BoisChauff+" est mis en couleur (partie après "Bois"). */
-export function Brand({ name, tagline, logoUrl, size = 52 }: { name: string; tagline?: string; logoUrl?: string; size?: number }) {
-  const m = /^(Bois)(.+)$/.exec(name);
+/** Logo complet : arbre + nom. Pour « GodenWood », « Goden » est doré et « Wood » blanc. */
+export function Brand({ name, tagline, logoUrl, size = 58 }: { name: string; tagline?: string; logoUrl?: string; size?: number }) {
+  const m = /^(Goden)(Wood.*)$/.exec(name) ?? /^(Bois)(.+)$/.exec(name);
   return (
     <span className="brand">
       {logoUrl
@@ -27,7 +31,7 @@ export function Brand({ name, tagline, logoUrl, size = 52 }: { name: string; tag
         ? <img src={logoUrl} alt="" width={size} height={size} style={{ width: size, height: size, objectFit: 'contain' }} />
         : <LogoMark size={size} />}
       <span>
-        <span className="brand-name">{m ? <>{m[1]}<em>{m[2]}</em></> : name}</span>
+        <span className="brand-name">{m ? <><em>{m[1]}</em>{m[2]}</> : name}</span>
         {tagline ? <span className="brand-tagline">{tagline}</span> : null}
       </span>
     </span>

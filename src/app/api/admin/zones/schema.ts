@@ -10,6 +10,7 @@ export const zoneSchema = z.object({
   free_above: z.number().min(0).max(100_000_000).nullable().default(null),
   min_order_amount: z.number().min(0).max(100_000_000).nullable().default(null),
   lead_time: z.string().trim().max(80).default(''),
+  postal_prefixes: z.string().trim().max(400).regex(/^[0-9A-Za-z, ]*$/, 'Préfixes : chiffres, FR ou EU, séparés par des virgules.').default(''),
   is_active: z.boolean().default(true),
   is_demo: z.boolean().default(false),
   sort_order: z.number().int().min(0).max(10000).default(0),

@@ -11,19 +11,23 @@ import { db } from '@/lib/db';
 import { getSettings } from '@/lib/settings';
 import { ORDER_STATUSES, PAYMENT_STATUSES, type OrderStatus } from '@/lib/orders';
 import { formatMoney } from '@/lib/pricing';
+import { reviewableOrders } from '@/lib/reviews';
+import { ReviewForm } from '@/components/ReviewForm';
 
 export const metadata: Metadata = { title: 'Mon compte', robots: { index: false } };
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/compte/connexion');
-  const [orders, addr, s] = await Promise.all([
+  const [orders, addr, s, reviewable] = await Promise.all([
     db()<{ order_number: string; access_token: string; status: OrderStatus; payment_status: keyof typeof PAYMENT_STATUSES; total_amount: string | null; currency: string; created_at: Date }[]>`
       select order_number, access_token, status, payment_status, total_amount, currency, created_at from orders where user_id = ${user.id} order by created_at desc limit 100`,
     db()<{ line1: string; line2: string; city: string; postal_code: string; country: string }[]>`
       select line1, line2, city, postal_code, country from addresses where user_id = ${user.id} and order_id is null order by is_default desc, id desc limit 1`,
     getSettings(),
+    reviewableOrders(user.id),
   ]);
+  const toReview = reviewable.filter((o) => !o.review_status).map((o) => ({ orderNumber: o.order_number, date: new Date(o.created_at).toISOString() }));
   const badge = (st: string) => (st === 'delivered' || st === 'paid' ? 'b-green' : st === 'cancelled' ? 'b-red' : st === 'shipping' || st === 'preparing' ? 'b-blue' : 'b-orange');
   return (
     <>
@@ -54,6 +58,7 @@ export default async function AccountPage() {
                 </div>
               )}
             </div>
+            <ReviewForm orders={toReview} />
           </div>
           <div>
             <AccountProfile user={{ firstName: user.first_name, lastName: user.last_name, email: user.email, phone: user.phone }}

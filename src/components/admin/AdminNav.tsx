@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ExternalLink, KeyRound, LayoutDashboard, Mail, MessageSquare, Package, Settings, ShoppingBag, Truck } from 'lucide-react';
+import { ExternalLink, KeyRound, LayoutDashboard, Mail, MailPlus, MessageSquare, Package, Settings, ShoppingBag, Star, Truck } from 'lucide-react';
 import { LogoutButton } from '../LogoutButton';
 
 const LINKS = [
@@ -12,6 +12,8 @@ const LINKS = [
   { href: '/admin/livraison', label: 'Livraison', icon: Truck },
   { href: '/admin/emails', label: 'E-mails', icon: Mail },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/admin/avis', label: 'Avis clients', icon: Star },
+  { href: '/admin/newsletter', label: 'Newsletter', icon: MailPlus },
   { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
 ];
 

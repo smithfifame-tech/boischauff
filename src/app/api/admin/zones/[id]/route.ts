@@ -13,7 +13,7 @@ export const PUT = apiRoute<Ctx>(async (req, ctx) => {
   const z = zoneSchema.parse(await readJson(req));
   const r = await db()`update delivery_zones set name=${z.name}, description=${z.description}, mode=${z.mode}, fixed_fee=${z.fixed_fee},
     per_km_fee=${z.per_km_fee}, distance_km=${z.distance_km}, free_above=${z.free_above}, min_order_amount=${z.min_order_amount},
-    lead_time=${z.lead_time}, is_active=${z.is_active}, is_demo=${z.is_demo}, sort_order=${z.sort_order}, updated_at=now() where id=${id} returning id`;
+    lead_time=${z.lead_time}, postal_prefixes=${z.postal_prefixes}, is_active=${z.is_active}, is_demo=${z.is_demo}, sort_order=${z.sort_order}, updated_at=now() where id=${id} returning id`;
   if (!r.length) throw new HttpError(404, 'Zone introuvable.');
   return NextResponse.json({ ok: true });
 });

@@ -1,13 +1,12 @@
-// Logo provisoire BoisChauff+ : flamme + deux bûches croisées (viewBox 64 x 64).
-// Partagé entre le site (SVG) et les reçus PDF (pdf-lib drawSvgPath).
+// Logo GodenWood : arbre doré + maison (viewBox 64 x 64).
+// Partagé entre le site (SVG) et les reçus PDF (pdf-lib drawSvgPath : formes pleines uniquement).
 export const LOGO_PATHS = {
-  logLeft: 'M6 49 L44 39 Q49 38 50 42.5 Q51 47 46 48.5 L8 58.5 Q3 59.5 2 55 Q1 50.5 6 49 Z',
-  logRight: 'M58 49 L20 39 Q15 38 14 42.5 Q13 47 18 48.5 L56 58.5 Q61 59.5 62 55 Q63 50.5 58 49 Z',
-  flameOuter: 'M32 3 C36.5 13 47 17.5 47 30 C47 39.5 40.5 46 32 46 C23.5 46 17 39.5 17 30 C17 22.5 21 18.5 24.5 14.5 C24.5 21 27.5 24.5 30 24.5 C28.5 17 29.5 9.5 32 3 Z',
-  flameInner: 'M32 21 C34.5 26.5 40 29 40 35.5 C40 40.5 36.5 44 32 44 C27.5 44 24 40.5 24 35.5 C24 31 27 28.5 28.5 25.5 C29.5 28.5 30.5 29.5 32 29.5 C31 26.5 31 24 32 21 Z',
+  canopy: 'M20 3 C27 3 31 7 31.5 12 C36.5 13 39 18 37 22.5 C39.5 27 36 32.5 29.5 32.5 L10.5 32.5 C4 32.5 0.5 27 3 22.5 C1 18 3.5 13 8.5 12 C9 7 13 3 20 3 Z',
+  leaves: 'M14 14 C16 11 19 11 20 13 C17 13 15.5 14.5 14 17 Z M24 18 C27 16 30 17 30.5 19.5 C28 18.5 26 19 24 21 Z M10 23 C12.5 21 15.5 21.5 16 24 C13.5 23.5 11.5 24 10 26 Z',
+  trunk: 'M18.4 32 L21.6 32 L21.2 40 L25.5 35.5 L26.8 36.8 L21.4 43 L22.4 50 C23.8 53 26.5 54.8 30 56 L10 56 C13.5 54.8 16.2 53 17.6 50 L18.3 44 L13.6 38.6 L15 37.4 L18.5 41 Z',
+  roof: 'M29 34 L44.5 20 L60 34 L56.6 34 L44.5 23.2 L32.4 34 Z',
+  walls: 'M35 31 L38.2 31 L38.2 52.8 L50.8 52.8 L50.8 31 L54 31 L54 56 L35 56 Z',
+  window: 'M40.6 36.6 L43.9 36.6 L43.9 39.9 L40.6 39.9 Z M45.1 36.6 L48.4 36.6 L48.4 39.9 L45.1 39.9 Z M40.6 41.1 L43.9 41.1 L43.9 44.4 L40.6 44.4 Z M45.1 41.1 L48.4 41.1 L48.4 44.4 L45.1 44.4 Z',
+  ground: 'M3 57.2 L61 57.2 L61 59.4 L3 59.4 Z',
 };
-export const LOGO_COLORS = { log: '#7A4A1E', logEnd: '#D9A066', flame: '#F47A08', flameInner: '#FFC928' };
-export const LOGO_LOG_ENDS = [
-  { cx: 46.5, cy: 43.5, r: 4 },
-  { cx: 17.5, cy: 43.5, r: 4 },
-];
+export const LOGO_COLORS = { gold: '#F5A623', light: '#FFC542', deep: '#C98010', glow: '#FFE08A' };

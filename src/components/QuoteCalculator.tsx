@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calculator, ShoppingCart, Truck } from 'lucide-react';
+import { Calculator, Coins, MapPin, ShoppingCart, Truck } from 'lucide-react';
+import { zoneForPostal } from '@/lib/postal';
 import { useSite } from './SiteProvider';
 import { formatQty, quoteDelivery, quoteLine, toKg, type Unit } from '@/lib/pricing';
 
@@ -14,6 +15,8 @@ export function QuoteCalculator({ variant = 'compact', initialProductId }: { var
   const [productId, setProductId] = useState<number>((initialProductId && products.some((p) => p.id === initialProductId) ? initialProductId : undefined) ?? products.find((p) => p.slug === 'bois-dur')?.id ?? products[0]?.id ?? 0);
   const [qty, setQty] = useState<string>('500');
   const [unit, setUnit] = useState<Unit>('kg');
+  const [postal, setPostal] = useState('');
+  const [manual, setManual] = useState(false);
   const product = products.find((p) => p.id === productId);
   const zone = zones.find((z) => z.id === zoneId) ?? null;
 
@@ -67,13 +70,29 @@ export function QuoteCalculator({ variant = 'compact', initialProductId }: { var
           return <button type="button" key={k} className={on ? 'on' : ''} onClick={() => { setUnit('kg'); setQty(String(k)); }}>{formatQty(k)}</button>;
         })}
       </div>
-      {variant === 'full' || zones.length > 0 ? (
+      {zones.length > 0 ? (
         <div className="field">
-          <label className="label" htmlFor="calc-zone">Zone de livraison</label>
-          <select id="calc-zone" className="select" value={zoneId ?? ''} onChange={(e) => setZoneId(e.target.value ? Number(e.target.value) : null)}>
-            <option value="">Choisir ma zone…</option>
-            {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
-          </select>
+          <label className="label" htmlFor={manual ? 'calc-zone' : 'calc-postal'}>Lieu de livraison</label>
+          {manual ? (
+            <select id="calc-zone" className="select" value={zoneId ?? ''} onChange={(e) => setZoneId(e.target.value ? Number(e.target.value) : null)}>
+              <option value="">Choisir ma zone…</option>
+              {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+            </select>
+          ) : (
+            <div className="input-icon">
+              <MapPin size={17} aria-hidden />
+              <input id="calc-postal" className="input" inputMode="numeric" autoComplete="postal-code" maxLength={5} placeholder="Entrez votre code postal…" value={postal}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 5);
+                  setPostal(v);
+                  if (v.length === 5) setZoneId(zoneForPostal(zones, v)?.id ?? null);
+                }} />
+            </div>
+          )}
+          <div className="postal-zone" aria-live="polite">
+            {zone ? <span>Zone : <b>{zone.name}</b></span> : postal.length === 5 && !manual ? <span>Code non reconnu : choisissez votre zone</span> : <span>{manual ? '' : 'Paris, Île-de-France, province…'}</span>}
+            <button type="button" onClick={() => setManual((m) => !m)}>{manual ? 'Saisir un code postal' : 'Choisir dans la liste'}</button>
+          </div>
         </div>
       ) : null}
       {q && !q.ok && <p className="calc-error" role="alert">{q.error}</p>}
@@ -88,7 +107,7 @@ export function QuoteCalculator({ variant = 'compact', initialProductId }: { var
         {tax > 0 && <div><span>{commerce.taxLabel}</span><strong>{money(tax)}</strong></div>}
       </div>
       <div className="calc-total">
-        <small>Total estimé</small>
+        <small style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}><Coins size={20} aria-hidden style={{ color: 'var(--orange)' }} /> Total estimé</small>
         <strong>{q?.ok ? `${money(total)}${!zone || delivery?.requiresQuote ? ' + livraison' : ''}` : '—'}</strong>
       </div>
       <button type="button" className="btn btn-primary btn-block" disabled={!q?.ok || Boolean(belowMin)} onClick={() => order(true)}>

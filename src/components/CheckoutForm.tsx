@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Loader2, Lock, ShoppingCart } from 'lucide-react';
 import { useSite } from './SiteProvider';
+import { QuickAuth } from './QuickAuth';
+import { zoneForPostal } from '@/lib/postal';
 import { useServerQuote } from './useServerQuote';
 import { OrderSummary } from './OrderSummary';
 import { api, uid } from '@/lib/client';
@@ -30,6 +32,12 @@ export function CheckoutForm({ user, address }: Props) {
   const [submitError, setSubmitError] = useState('');
   const [sending, setSending] = useState(false);
   const { quote, loading } = useServerQuote(items, zoneId, ready);
+  // Zone détectée automatiquement à partir du code postal (modifiable ensuite).
+  useEffect(() => {
+    const z = zoneForPostal(zones, f.postalCode, f.country);
+    if (z) setZoneId(z.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.postalCode, f.country, zones]);
   useEffect(() => { if (!idem.current) idem.current = uid(); }, []);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -50,14 +58,7 @@ export function CheckoutForm({ user, address }: Props) {
   }
   if (!user && !commerce.guestCheckout) {
     return (
-      <div className="card card-pad" style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
-        <h2>Connectez-vous pour commander</h2>
-        <p className="hint">Un compte client est nécessaire pour passer commande.</p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <Link href="/compte/connexion?next=/commande" className="btn btn-green">Se connecter</Link>
-          <Link href="/compte/inscription?next=/commande" className="btn btn-primary">Créer un compte</Link>
-        </div>
-      </div>
+      <QuickAuth />
     );
   }
 
