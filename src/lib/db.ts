@@ -12,12 +12,25 @@ function createClient() {
     throw new Error('DATABASE_URL manquant : configurez la base de données (voir .env.example).');
   }
   const isLocal = /@(localhost|127\.0\.0\.1)|host=\/|%2Ftmp/.test(url);
+  // Pooler Supabase : le mode transaction (port 6543) bloque les requêtes paramétrées de postgres.js
+  // (Describe + Flush sans Sync). On utilise le mode session (port 5432) du même pooler, sauf si
+  // DATABASE_POOL_MODE=transaction est explicitement demandé.
+  let finalUrl = url;
+  let session = false;
+  try {
+    const u = new URL(url);
+    if (u.hostname.endsWith('pooler.supabase.com') && u.port === '6543' && process.env.DATABASE_POOL_MODE !== 'transaction') {
+      u.port = '5432';
+      finalUrl = u.toString();
+      session = true;
+    }
+  } catch { /* URL non standard : utilisée telle quelle */ }
+  const transactionPooler = !session && /:6543\b|pgbouncer=true/.test(url);
   const options = {
-    // Compatible avec un pooler en mode transaction (Supabase Supavisor, PgBouncer…)
-    prepare: false,
-    max: Number(process.env.DATABASE_POOL_MAX || 5),
-    // Pas de pipelining : le pooler Supabase en mode transaction peut bloquer des requêtes envoyées en rafale sur une même connexion.
-    max_pipeline: 1,
+    // Requêtes préparées seulement hors pooler en mode transaction
+    prepare: !transactionPooler,
+    max: Number(process.env.DATABASE_POOL_MAX || (session ? 3 : 5)),
+    max_pipeline: transactionPooler ? 1 : 100,
     idle_timeout: 20,
     connect_timeout: 15,
     ssl: isLocal || process.env.DATABASE_SSL === 'disable' ? false : 'require',
@@ -26,7 +39,7 @@ function createClient() {
     onnotice: () => {},
   };
   // max_pipeline existe dans postgres.js mais n'est pas déclaré dans ses types.
-  return postgres(url, options as unknown as Parameters<typeof postgres>[1]);
+  return postgres(finalUrl, options as unknown as Parameters<typeof postgres>[1]);
 }
 
 export function db() {
